@@ -6,11 +6,13 @@ import {
   CalendarCheck,
   ArrowUpRight,
   Clock,
-  CalendarClock,
   Briefcase,
   CircleDollarSign,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
+import type { PageKey } from '@/components/layout/Sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { StatCard } from '@/components/shared/StatCard';
 import { ProgressRing } from '@/components/shared/ProgressRing';
@@ -27,7 +29,7 @@ import { cn, formatCurrency, formatDateShort, dueLabel } from '@/lib/utils';
 
 interface DashboardProps {
   data: AppData;
-  onNavigate: (page: 'employees' | 'projects' | 'tasks' | 'meetings' | 'attendance') => void;
+  onNavigate: (page: PageKey) => void;
 }
 
 export function Dashboard({ data, onNavigate }: DashboardProps) {
@@ -48,26 +50,17 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
       .sort((a, b) => a.meeting_date.localeCompare(b.meeting_date))
       .slice(0, 4);
     return {
-      activeEmployees,
-      onLeave,
-      activeProjects,
-      openTasks,
-      doneTasks,
-      completionRate,
-      presentToday,
-      totalBudget,
-      upcomingMeetings,
+      activeEmployees, onLeave, activeProjects, openTasks, doneTasks,
+      completionRate, presentToday, totalBudget, upcomingMeetings,
     };
   }, [employees, projects, tasks, meetings, attendance, departments]);
 
-  // Task distribution for donut
   const taskDist = useMemo(() => {
     const groups = { todo: 0, 'in-progress': 0, review: 0, done: 0 };
     tasks.forEach((t) => { groups[t.status]++; });
     return groups;
   }, [tasks]);
 
-  // Attendance last 7 working days
   const attendanceChart = useMemo(() => {
     const byDate = new Map<string, { present: number; late: number; remote: number; absent: number }>();
     attendance.forEach((a) => {
@@ -82,13 +75,9 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
 
   const maxAttendance = Math.max(1, ...attendanceChart.map(([, v]) => v.present + v.late + v.remote + v.absent));
 
-  // Department headcount
   const deptHeadcount = useMemo(() => {
     return departments
-      .map((d) => ({
-        ...d,
-        count: employees.filter((e) => e.department_id === d.id).length,
-      }))
+      .map((d) => ({ ...d, count: employees.filter((e) => e.department_id === d.id).length }))
       .sort((a, b) => b.count - a.count);
   }, [departments, employees]);
 
@@ -97,54 +86,49 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
     [tasks],
   );
 
+  const activeProjectsList = useMemo(
+    () => projects.filter((p) => p.status === 'active' || p.status === 'planning').slice(0, 5),
+    [projects],
+  );
+
   return (
     <div className="space-y-6">
+      {/* AI insight banner — Stripe-style */}
+      <div className="relative overflow-hidden rounded-2xl border border-brand-500/15 bg-gradient-to-r from-brand-600/10 via-brand-600/[0.04] to-transparent p-5 animate-fade-in">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-500/10 blur-3xl animate-glow-pulse" />
+        <div className="relative flex items-start gap-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-accent-500 shadow-brand-glow">
+            <Sparkles className="h-4.5 w-4.5 text-white" />
+          </span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="font-display text-sm font-semibold text-white">Atlas AI Insight</p>
+              <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-[10px] font-semibold text-brand-300 ring-1 ring-inset ring-brand-500/20">Daily</span>
+            </div>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink-300">
+              Your team is <span className="font-semibold text-white">{stats.completionRate}%</span> through all tasks
+              with <span className="font-semibold text-white">{stats.presentToday}</span> people present today.
+              {stats.openTasks > 0 && ` ${stats.openTasks} tasks still open — consider reviewing priorities.`}
+            </p>
+          </div>
+          <button className="hidden shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[13px] font-medium text-ink-300 transition-colors hover:bg-white/[0.08] hover:text-white sm:block">
+            View report
+          </button>
+        </div>
+      </div>
+
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger">
-        <StatCard
-          label="Active Employees"
-          value={stats.activeEmployees}
-          icon={Users}
-          tone="brand"
-          hint={stats.onLeave > 0 ? `${stats.onLeave} on leave` : 'All hands on deck'}
-          loading={loading}
-          delay={0}
-        />
-        <StatCard
-          label="Active Projects"
-          value={stats.activeProjects}
-          icon={FolderKanban}
-          tone="accent"
-          trend={{ value: '12%', up: true }}
-          hint="vs last quarter"
-          loading={loading}
-          delay={60}
-        />
-        <StatCard
-          label="Open Tasks"
-          value={stats.openTasks}
-          icon={CheckSquare}
-          tone="warning"
-          hint={`${stats.doneTasks} completed`}
-          loading={loading}
-          delay={120}
-        />
-        <StatCard
-          label="Present Today"
-          value={stats.presentToday}
-          icon={CalendarCheck}
-          tone="success"
-          trend={{ value: '94%', up: true }}
-          hint="attendance rate"
-          loading={loading}
-          delay={180}
-        />
+        <StatCard label="Active Employees" value={stats.activeEmployees} icon={Users} tone="brand" hint={stats.onLeave > 0 ? `${stats.onLeave} on leave` : 'All hands on deck'} loading={loading} delay={0} />
+        <StatCard label="Active Projects" value={stats.activeProjects} icon={FolderKanban} tone="accent" trend={{ value: '12%', up: true }} hint="vs last quarter" loading={loading} delay={60} />
+        <StatCard label="Open Tasks" value={stats.openTasks} icon={CheckSquare} tone="warning" hint={`${stats.doneTasks} completed`} loading={loading} delay={120} />
+        <StatCard label="Present Today" value={stats.presentToday} icon={CalendarCheck} tone="success" trend={{ value: '94%', up: true }} hint="attendance rate" loading={loading} delay={180} />
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Task completion donut */}
-        <Card className="lg:col-span-1 dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <div>
               <CardTitle>Task Completion</CardTitle>
@@ -152,19 +136,19 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center gap-6 pt-2">
+            <div className="flex flex-col items-center gap-6 pt-1">
               <ProgressRing value={stats.completionRate} size={140} strokeWidth={12} label={`${stats.completionRate}%`} />
-              <div className="grid w-full grid-cols-2 gap-3">
+              <div className="grid w-full grid-cols-2 gap-2.5">
                 {([
                   { key: 'done', label: 'Done', tone: 'bg-success-500', value: taskDist.done },
                   { key: 'in-progress', label: 'In Progress', tone: 'bg-accent-500', value: taskDist['in-progress'] },
                   { key: 'review', label: 'Review', tone: 'bg-warning-500', value: taskDist.review },
-                  { key: 'todo', label: 'To Do', tone: 'bg-ink-300', value: taskDist.todo },
+                  { key: 'todo', label: 'To Do', tone: 'bg-ink-400 dark:bg-ink-600', value: taskDist.todo },
                 ] as const).map((g) => (
                   <div key={g.key} className="flex items-center gap-2">
-                    <span className={cn('h-2.5 w-2.5 rounded-full', g.tone)} />
-                    <span className="text-sm text-ink-600">{g.label}</span>
-                    <span className="ml-auto text-sm font-semibold text-ink-900">{g.value}</span>
+                    <span className={cn('h-2 w-2 rounded-full', g.tone)} />
+                    <span className="text-[13px] text-ink-600 dark:text-ink-400">{g.label}</span>
+                    <span className="ml-auto text-[13px] font-semibold tabular text-ink-900 dark:text-white">{g.value}</span>
                   </div>
                 ))}
               </div>
@@ -173,13 +157,13 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
         </Card>
 
         {/* Attendance bar chart */}
-        <Card className="lg:col-span-2 dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <div>
               <CardTitle>Attendance Trend</CardTitle>
               <CardDescription>Last 7 working days</CardDescription>
             </div>
-            <div className="hidden items-center gap-4 text-xs text-ink-500 dark:text-ink-400 sm:flex">
+            <div className="hidden items-center gap-3 text-[11px] text-ink-500 dark:text-ink-400 sm:flex">
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success-500" /> Present</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-warning-500" /> Late</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent-500" /> Remote</span>
@@ -187,7 +171,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           </CardHeader>
           <CardContent>
             {attendanceChart.length === 0 ? (
-              <div className="flex h-48 items-center justify-center text-sm text-ink-400 dark:text-ink-500">No attendance records yet</div>
+              <div className="flex h-48 items-center justify-center text-[13px] text-ink-400 dark:text-ink-500">No attendance records yet</div>
             ) : (
               <div className="flex h-52 items-end justify-between gap-3 pt-4">
                 {attendanceChart.map(([date, v]) => {
@@ -197,18 +181,18 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                     <div key={date} className="group flex flex-1 flex-col items-center gap-2">
                       <div className="relative flex w-full max-w-[44px] flex-col justify-end" style={{ height: '160px' }}>
                         <div
-                          className="flex w-full flex-col-reverse overflow-hidden rounded-lg transition-all duration-500 group-hover:scale-[1.04]"
+                          className="flex w-full flex-col-reverse overflow-hidden rounded-lg transition-all duration-500 ease-out-quart group-hover:scale-[1.04] group-hover:shadow-brand-glow"
                           style={{ height: `${heightPct}%` }}
                         >
                           {v.present > 0 && <div className="bg-success-500" style={{ flexGrow: v.present }} />}
                           {v.late > 0 && <div className="bg-warning-500" style={{ flexGrow: v.late }} />}
                           {v.remote > 0 && <div className="bg-accent-500" style={{ flexGrow: v.remote }} />}
                         </div>
-                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-ink-900 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-ink-700">
+                        <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-ink-800 px-2 py-0.5 text-[11px] font-semibold tabular text-white opacity-0 transition-all duration-200 group-hover:opacity-100 dark:bg-ink-700">
                           {total}
                         </span>
                       </div>
-                      <span className="text-[11px] font-medium text-ink-500 dark:text-ink-400">{formatDateShort(date)}</span>
+                      <span className="text-[11px] font-medium tabular text-ink-500 dark:text-ink-400">{formatDateShort(date)}</span>
                     </div>
                   );
                 })}
@@ -219,24 +203,24 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
       </div>
 
       {/* Budget + Department headcount */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1 dark:bg-ink-850/60 dark:border-white/[0.06]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <div>
-              <CardTitle>Total Department Budget</CardTitle>
+              <CardTitle>Department Budget</CardTitle>
               <CardDescription>Combined annual allocation</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success-50 text-success-600 ring-1 ring-success-100 dark:bg-success-500/15 dark:text-success-400 dark:ring-success-500/25">
-                <CircleDollarSign className="h-8 w-8" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-success-500/10 text-success-400 ring-1 ring-success-500/20">
+                <CircleDollarSign className="h-7 w-7" />
               </div>
               <div>
-                <p className="font-display text-3xl font-bold tracking-tight text-ink-900 dark:text-white">
+                <p className="font-display text-stat tabular text-ink-900 dark:text-white">
                   {formatCurrency(stats.totalBudget)}
                 </p>
-                <p className="mt-0.5 text-sm text-ink-500 dark:text-ink-400">across {departments.length} departments</p>
+                <p className="mt-0.5 text-[13px] text-ink-500 dark:text-ink-400">across {departments.length} departments</p>
               </div>
             </div>
             <div className="mt-5 space-y-3">
@@ -244,9 +228,9 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                 const budgetPct = stats.totalBudget > 0 ? ((d.budget ?? 0) / stats.totalBudget) * 100 : 0;
                 return (
                   <div key={d.id}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
+                    <div className="mb-1.5 flex items-center justify-between text-[13px]">
                       <span className="font-medium text-ink-700 dark:text-ink-200">{d.name}</span>
-                      <span className="text-ink-500 dark:text-ink-400">{formatCurrency(d.budget)}</span>
+                      <span className="tabular text-ink-500 dark:text-ink-400">{formatCurrency(d.budget)}</span>
                     </div>
                     <ProgressBar value={budgetPct} barClassName="bg-gradient-to-r from-brand-400 to-accent-400" />
                   </div>
@@ -257,7 +241,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
         </Card>
 
         {/* Upcoming meetings */}
-        <Card className="lg:col-span-2 dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <div>
               <CardTitle>Upcoming Meetings</CardTitle>
@@ -265,36 +249,36 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('meetings')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
             >
-              View all <ArrowUpRight className="h-4 w-4" />
+              View all <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </CardHeader>
           <CardContent className="pt-0">
             {stats.upcomingMeetings.length === 0 ? (
-              <div className="flex h-32 items-center justify-center text-sm text-ink-400">No meetings scheduled</div>
+              <div className="flex h-32 items-center justify-center text-[13px] text-ink-400 dark:text-ink-500">No meetings scheduled</div>
             ) : (
-              <div className="divide-y divide-ink-100">
+              <div className="divide-y divide-ink-100 dark:divide-white/[0.06]">
                 {stats.upcomingMeetings.map((m) => {
                   const meetingDate = new Date(m.meeting_date);
                   const day = meetingDate.toLocaleDateString('en-US', { weekday: 'short' });
                   const dateNum = meetingDate.getDate();
                   const isToday = m.meeting_date === new Date().toISOString().slice(0, 10);
                   return (
-                    <div key={m.id} className="flex items-center gap-4 py-3.5 transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg">
+                    <div key={m.id} className="flex items-center gap-4 py-3 transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg">
                       <div
                         className={cn(
-                          'flex h-12 w-12 flex-col items-center justify-center rounded-xl text-center shrink-0',
-                          isToday ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-700 dark:bg-ink-700/40 dark:text-ink-300',
+                          'flex h-11 w-11 flex-col items-center justify-center rounded-xl text-center shrink-0',
+                          isToday ? 'bg-brand-600 text-white shadow-brand-glow' : 'bg-white/[0.04] text-ink-300 dark:bg-white/[0.04] dark:text-ink-400 ring-1 ring-inset ring-white/[0.06]',
                         )}
                       >
                         <span className="text-[10px] font-semibold uppercase">{day}</span>
-                        <span className="font-display text-lg font-bold leading-none">{dateNum}</span>
+                        <span className="font-display text-base font-bold leading-none tabular">{dateNum}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-ink-900 dark:text-white">{m.title}</p>
+                        <p className="truncate text-[13px] font-semibold text-ink-900 dark:text-white">{m.title}</p>
                         <p className="flex items-center gap-2 text-xs text-ink-500 dark:text-ink-400">
-                          <Clock className="h-3.5 w-3.5" />
+                          <Clock className="h-3 w-3" />
                           {m.start_time.slice(0, 5)} · {m.duration_minutes}m
                           {m.location && <span className="hidden sm:inline">· {m.location}</span>}
                         </p>
@@ -310,8 +294,8 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
       </div>
 
       {/* Recent tasks + Project progress */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
           <CardHeader>
             <div>
               <CardTitle>Recent Tasks</CardTitle>
@@ -319,9 +303,9 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('tasks')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
             >
-              View all <ArrowUpRight className="h-4 w-4" />
+              View all <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </CardHeader>
           <CardContent className="pt-0">
@@ -332,7 +316,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                   <div key={t.id} className="flex items-center gap-3 py-3">
                     <Avatar name={t.assignee?.name ?? 'Unassigned'} src={t.assignee?.avatar_url} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink-900 dark:text-white">{t.title}</p>
+                      <p className="truncate text-[13px] font-medium text-ink-900 dark:text-white">{t.title}</p>
                       <p className="truncate text-xs text-ink-500 dark:text-ink-400">{t.project?.name ?? 'No project'}</p>
                     </div>
                     <div className="hidden items-center gap-2 sm:flex">
@@ -341,7 +325,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                     <TaskStatusBadge status={t.status} />
                     <span
                       className={cn(
-                        'hidden w-16 text-right text-xs font-medium md:block',
+                        'hidden w-16 text-right text-xs font-medium tabular md:block',
                         due.tone === 'overdue' ? 'text-danger-600 dark:text-danger-400' : due.tone === 'soon' ? 'text-warning-600 dark:text-warning-400' : 'text-ink-500 dark:text-ink-400',
                       )}
                     >
@@ -354,7 +338,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           </CardContent>
         </Card>
 
-        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <Card>
           <CardHeader>
             <div>
               <CardTitle>Project Progress</CardTitle>
@@ -362,22 +346,22 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('projects')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
             >
-              View all <ArrowUpRight className="h-4 w-4" />
+              View all <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="divide-y divide-ink-100 dark:divide-white/[0.06]">
-              {projects.slice(0, 5).map((p) => (
-                <div key={p.id} className="py-3.5">
+              {activeProjectsList.map((p) => (
+                <div key={p.id} className="py-3">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-600 dark:bg-white/5 dark:text-ink-300">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-ink-400 ring-1 ring-inset ring-white/[0.06]">
                         <Briefcase className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-ink-900 dark:text-white">{p.name}</p>
+                        <p className="truncate text-[13px] font-semibold text-ink-900 dark:text-white">{p.name}</p>
                         <p className="truncate text-xs text-ink-500 dark:text-ink-400">{p.department?.name ?? '—'}</p>
                       </div>
                     </div>
@@ -386,8 +370,8 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                   <Bar value={p.progress} showValue barClassName={p.progress >= 75 ? 'bg-success-500' : p.progress >= 40 ? 'bg-brand-500' : 'bg-warning-500'} />
                 </div>
               ))}
-              {projects.length === 0 && (
-                <div className="flex h-32 items-center justify-center text-sm text-ink-400 dark:text-ink-500">No projects yet</div>
+              {activeProjectsList.length === 0 && (
+                <div className="flex h-32 items-center justify-center text-[13px] text-ink-400 dark:text-ink-500">No projects yet</div>
               )}
             </div>
           </CardContent>

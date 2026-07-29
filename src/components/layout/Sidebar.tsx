@@ -29,23 +29,22 @@ interface NavItem {
   key: PageKey;
   label: string;
   icon: typeof LayoutDashboard;
-  description: string;
   badge?: string;
 }
 
 const nav: NavItem[] = [
-  { key: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard, description: 'Overview & insights' },
-  { key: 'employees',   label: 'Employees',   icon: Users,           description: 'Manage your team' },
-  { key: 'departments', label: 'Departments', icon: Building2,       description: 'Org structure' },
-  { key: 'projects',    label: 'Projects',    icon: FolderKanban,    description: 'Initiatives & timelines' },
-  { key: 'tasks',       label: 'Tasks',       icon: CheckSquare,     description: 'Work items & progress' },
-  { key: 'attendance',  label: 'Attendance',  icon: CalendarCheck,   description: 'Daily check-ins' },
-  { key: 'meetings',    label: 'Meetings',    icon: CalendarClock,   description: 'Scheduled sessions' },
+  { key: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
+  { key: 'employees',   label: 'Employees',   icon: Users },
+  { key: 'departments', label: 'Departments', icon: Building2 },
+  { key: 'projects',    label: 'Projects',    icon: FolderKanban },
+  { key: 'tasks',       label: 'Tasks',       icon: CheckSquare },
+  { key: 'attendance',  label: 'Attendance',  icon: CalendarCheck },
+  { key: 'meetings',    label: 'Meetings',    icon: CalendarClock },
 ];
 
 const adminNav: NavItem[] = [
-  { key: 'admin',    label: 'Admin Panel', icon: Shield,   description: 'Roles, transactions & controls', badge: 'Admin' },
-  { key: 'settings', label: 'Settings',    icon: Settings, description: 'Workspace preferences' },
+  { key: 'admin',    label: 'Admin Panel', icon: Shield,   badge: 'Admin' },
+  { key: 'settings', label: 'Settings',    icon: Settings },
 ];
 
 interface SidebarProps {
@@ -58,7 +57,6 @@ interface SidebarProps {
 export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: SidebarProps) {
   return (
     <>
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-ink-950/60 backdrop-blur-md lg:hidden animate-fade-in"
@@ -69,25 +67,25 @@ export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: Side
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-ink-925 text-ink-100 transition-transform duration-300 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-ink-925 text-ink-100 transition-transform duration-300 ease-out-quart lg:translate-x-0',
           'border-r border-white/[0.04]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute -left-20 top-0 h-48 w-48 rounded-full bg-brand-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-1/3 h-32 w-32 rounded-full bg-accent-600/10 blur-3xl" />
+        {/* Ambient glow — subtle, premium */}
+        <div className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-brand-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-1/3 h-28 w-28 rounded-full bg-accent-600/8 blur-3xl" />
 
         {/* Brand */}
-        <div className="relative flex items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 via-brand-500 to-accent-500 shadow-glow">
-              <Sparkles className="h-5 w-5 text-white" />
-              <span className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
+        <div className="relative flex h-14 items-center justify-between px-5">
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 via-brand-500 to-accent-500 shadow-brand-glow">
+              <Sparkles className="h-4 w-4 text-white" />
+              <span className="absolute inset-0 rounded-lg ring-1 ring-inset ring-white/20" />
             </div>
-            <div>
-              <p className="font-display text-lg font-bold tracking-tight text-white">Atlas</p>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-ink-400">Enterprise OS</p>
+            <div className="flex items-baseline gap-1.5">
+              <p className="font-display text-[15px] font-bold tracking-tight text-white">Atlas</p>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-ink-500">OS</p>
             </div>
           </div>
           <button
@@ -95,13 +93,13 @@ export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: Side
             className="rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-white/5 hover:text-white lg:hidden"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4.5 w-4.5" />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="relative flex-1 space-y-1 overflow-y-auto px-4 py-2 scrollbar-none">
-          <p className="px-3 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+        <nav className="relative flex-1 space-y-0.5 overflow-y-auto px-3 pt-2 scrollbar-none">
+          <p className="px-3 pb-1.5 pt-3 text-[10px] font-semibold uppercase tracking-widest text-ink-600">
             Workspace
           </p>
           {nav.map((item) => {
@@ -112,36 +110,27 @@ export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: Side
                 key={item.key}
                 onClick={() => onNavigate(item.key)}
                 className={cn(
-                  'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                  active ? 'bg-white/[0.06] text-white' : 'text-ink-300 hover:bg-white/[0.03] hover:text-white',
+                  'group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ease-out-quart',
+                  active ? 'bg-white/[0.06] text-white' : 'text-ink-400 hover:bg-white/[0.03] hover:text-white',
                 )}
               >
                 {active && (
-                  <span className="absolute left-0 top-1/2 h-6 -translate-y-1/2 w-1 rounded-r-full bg-gradient-to-b from-brand-400 to-accent-500" />
+                  <span className="absolute left-0 top-1/2 h-4 -translate-y-1/2 w-0.5 rounded-r-full bg-brand-400" />
                 )}
-                <span
+                <Icon
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200',
-                    active
-                      ? 'bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-glow'
-                      : 'bg-white/[0.04] text-ink-400 group-hover:text-white group-hover:bg-white/[0.06]',
+                    'h-4 w-4 shrink-0 transition-colors',
+                    active ? 'text-brand-400' : 'text-ink-500 group-hover:text-ink-300',
                   )}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="flex-1 text-left">
-                  <span className="block">{item.label}</span>
-                  <span className={cn('block text-[11px]', active ? 'text-ink-400' : 'text-ink-500')}>
-                    {item.description}
-                  </span>
-                </span>
+                />
+                {item.label}
               </button>
             );
           })}
 
           {/* Admin section */}
-          <div className="pt-4">
-            <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+          <div className="pt-5">
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-600">
               Administration
             </p>
             {adminNav.map((item) => {
@@ -152,31 +141,22 @@ export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: Side
                   key={item.key}
                   onClick={() => onNavigate(item.key)}
                   className={cn(
-                    'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                    active ? 'bg-white/[0.06] text-white' : 'text-ink-300 hover:bg-white/[0.03] hover:text-white',
+                    'group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ease-out-quart',
+                    active ? 'bg-white/[0.06] text-white' : 'text-ink-400 hover:bg-white/[0.03] hover:text-white',
                   )}
                 >
                   {active && (
-                    <span className="absolute left-0 top-1/2 h-6 -translate-y-1/2 w-1 rounded-r-full bg-gradient-to-b from-danger-400 to-danger-500" />
+                    <span className="absolute left-0 top-1/2 h-4 -translate-y-1/2 w-0.5 rounded-r-full bg-danger-400" />
                   )}
-                  <span
+                  <Icon
                     className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200',
-                      active
-                        ? 'bg-gradient-to-br from-danger-500 to-danger-600 text-white shadow-soft'
-                        : 'bg-white/[0.04] text-ink-400 group-hover:text-white group-hover:bg-white/[0.06]',
+                      'h-4 w-4 shrink-0 transition-colors',
+                      active ? 'text-danger-400' : 'text-ink-500 group-hover:text-ink-300',
                     )}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span className="flex-1 text-left">
-                    <span className="block">{item.label}</span>
-                    <span className={cn('block text-[11px]', active ? 'text-ink-400' : 'text-ink-500')}>
-                      {item.description}
-                    </span>
-                  </span>
+                  />
+                  {item.label}
                   {item.badge && (
-                    <span className="rounded-full bg-danger-500/15 px-2 py-0.5 text-[10px] font-semibold text-danger-400 ring-1 ring-inset ring-danger-500/20">
+                    <span className="ml-auto rounded-full bg-danger-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-danger-400 ring-1 ring-inset ring-danger-500/20">
                       {item.badge}
                     </span>
                   )}
@@ -186,18 +166,18 @@ export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: Side
           </div>
         </nav>
 
-        {/* Footer upgrade card */}
-        <div className="relative p-4">
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-brand-600/20 via-ink-900/40 to-ink-900/60 p-4 backdrop-blur-sm">
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-brand-500/20 blur-2xl animate-glow-pulse" />
+        {/* Footer AI card — compact, Notion-style */}
+        <div className="relative p-3">
+          <div className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-gradient-to-br from-brand-600/10 via-transparent to-transparent p-3">
+            <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-brand-500/15 blur-2xl animate-glow-pulse" />
             <div className="relative flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-accent-500">
-                <Sparkles className="h-3.5 w-3.5 text-white" />
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-brand-400 to-accent-500">
+                <Sparkles className="h-3 w-3 text-white" />
               </span>
-              <p className="text-sm font-semibold text-white">Atlas AI</p>
+              <p className="text-[13px] font-semibold text-white">Atlas AI</p>
             </div>
-            <p className="relative mt-2 text-xs leading-relaxed text-ink-400">
-              Your AI workspace assistant — insights, summaries and automations.
+            <p className="relative mt-1.5 text-[11px] leading-relaxed text-ink-500">
+              Insights, summaries and automations for your workspace.
             </p>
           </div>
         </div>

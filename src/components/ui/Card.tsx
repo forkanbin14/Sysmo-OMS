@@ -10,19 +10,19 @@ export function Card({ className, hover = false, ...props }: CardProps) {
 }
 
 export function GlassCard({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('card-glass', className)} {...props} />;
+  return <div className={cn('card-glass gradient-border', className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex items-center justify-between gap-4 px-5 pt-5', className)} {...props} />;
+  return <div className={cn('flex items-start justify-between gap-4 px-5 pt-5', className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('font-display text-base font-semibold text-ink-900', className)} {...props} />;
+  return <h3 className={cn('font-display text-sm font-semibold tracking-tight text-ink-900 dark:text-white', className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-sm text-ink-500', className)} {...props} />;
+  return <p className={cn('text-[13px] text-ink-500 dark:text-ink-400', className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -30,5 +30,5 @@ export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivEleme
 }
 
 export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex items-center gap-3 border-t border-ink-100 px-5 py-3.5', className)} {...props} />;
+  return <div className={cn('flex items-center gap-3 border-t border-ink-100 px-5 py-3.5 dark:border-white/[0.06]', className)} {...props} />;
 }

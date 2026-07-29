@@ -9,6 +9,12 @@ export default {
         display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
+      fontSize: {
+        'display-lg': ['2.25rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'display':    ['1.75rem', { lineHeight: '1.15', letterSpacing: '-0.025em', fontWeight: '700' }],
+        'display-sm': ['1.25rem', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'stat':       ['1.875rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
+      },
       colors: {
         ink: {
           25:  '#f9fafb',
@@ -100,16 +106,21 @@ export default {
         card:  '0 2px 4px -2px rgb(16 24 40 / 0.06), 0 4px 16px -4px rgb(16 24 40 / 0.08)',
         float: '0 12px 32px -8px rgb(16 24 40 / 0.18), 0 4px 12px -4px rgb(16 24 40 / 0.10)',
         glow:  '0 0 0 1px rgb(51 140 255 / 0.18), 0 12px 40px -8px rgb(51 140 255 / 0.35)',
-        // dark mode shadows
-        'dark-soft':  '0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.2)',
-        'dark-card':  '0 2px 8px -2px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.25)',
-        'dark-float': '0 16px 48px -12px rgb(0 0 0 / 0.5), 0 8px 24px -8px rgb(0 0 0 / 0.3)',
-        'dark-glow':  '0 0 0 1px rgb(51 140 255 / 0.15), 0 16px 48px -12px rgb(51 140 255 / 0.25)',
+        // refined dark mode shadows — softer, more diffused
+        'dark-soft':  '0 1px 2px 0 rgb(0 0 0 / 0.2), 0 1px 3px 0 rgb(0 0 0 / 0.15)',
+        'dark-card':  '0 1px 3px 0 rgb(0 0 0 / 0.2), 0 4px 16px -4px rgb(0 0 0 / 0.2)',
+        'dark-float': '0 8px 32px -8px rgb(0 0 0 / 0.4), 0 4px 16px -4px rgb(0 0 0 / 0.25)',
+        'dark-glow':  '0 0 0 1px rgb(51 140 255 / 0.12), 0 8px 32px -8px rgb(51 140 255 / 0.2)',
         'inner-glow': 'inset 0 1px 0 0 rgb(255 255 255 / 0.05)',
+        'brand-glow': '0 0 20px -4px rgb(51 140 255 / 0.4)',
       },
       borderRadius: {
         xl2: '1.25rem',
         '2xl': '1rem',
+      },
+      transitionTimingFunction: {
+        'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'out-quart': 'cubic-bezier(0.25, 1, 0.5, 1)',
       },
       keyframes: {
         'fade-in': {
@@ -141,8 +152,8 @@ export default {
           '80%, 100%': { transform: 'scale(2.2)', opacity: '0' },
         },
         'glow-pulse': {
-          '0%, 100%': { opacity: '0.4' },
-          '50%': { opacity: '0.8' },
+          '0%, 100%': { opacity: '0.3' },
+          '50%': { opacity: '0.6' },
         },
         'gradient-shift': {
           '0%, 100%': { backgroundPosition: '0% 50%' },
@@ -158,19 +169,24 @@ export default {
           '50%': { transform: 'translateY(-6px)' },
           '100%': { transform: 'translateY(0)' },
         },
+        'draw-line': {
+          '0%': { strokeDashoffset: '1000' },
+          '100%': { strokeDashoffset: '0' },
+        },
       },
       animation: {
-        'fade-in': 'fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'fade-in-scale': 'fade-in-scale 0.3s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'slide-in-right': 'slide-in-right 0.4s cubic-bezier(0.22, 1, 0.36, 1) both',
-        'slide-in-up': 'slide-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both',
-        shimmer: 'shimmer 1.6s linear infinite',
-        'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
-        'ring-ping': 'ring-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite',
-        'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
+        'fade-in': 'fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'fade-in-scale': 'fade-in-scale 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'slide-in-right': 'slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'slide-in-up': 'slide-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+        shimmer: 'shimmer 1.8s linear infinite',
+        'pulse-soft': 'pulse-soft 2.5s ease-in-out infinite',
+        'ring-ping': 'ring-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'glow-pulse': 'glow-pulse 4s ease-in-out infinite',
         'gradient-shift': 'gradient-shift 8s ease infinite',
         'bounce-in': 'bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
-        'float-up': 'float-up 4s ease-in-out infinite',
+        'float-up': 'float-up 5s ease-in-out infinite',
+        'draw-line': 'draw-line 1.2s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
     },
   },
