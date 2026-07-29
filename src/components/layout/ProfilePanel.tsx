@@ -94,7 +94,7 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
     <div className="fixed inset-0 z-[80] flex">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-ink-950/50 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-ink-950/60 backdrop-blur-md animate-fade-in dark:bg-ink-950/70"
         onClick={onClose}
         aria-hidden
       />
@@ -103,7 +103,7 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
       <div
         role="dialog"
         aria-modal="true"
-        className="relative ml-auto flex h-full w-full max-w-md flex-col bg-white shadow-float animate-slide-in-right overflow-y-auto"
+        className="relative ml-auto flex h-full w-full max-w-md flex-col bg-white shadow-float animate-slide-in-right overflow-y-auto dark:bg-ink-900 dark:border-l dark:border-white/[0.06]"
       >
         {/* ── Header banner ── */}
         <div className="relative h-32 bg-gradient-to-br from-brand-600 via-brand-700 to-accent-600 shrink-0">
@@ -145,32 +145,32 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
 
         {/* ── Identity ── */}
         <div className="px-6 pt-3 pb-4">
-          <h2 className="font-display text-xl font-bold text-ink-900">{ADMIN.name}</h2>
-          <p className="text-sm font-medium text-brand-600">{ADMIN.position} · {ADMIN.department}</p>
-          <p className="mt-2 text-sm text-ink-500 leading-relaxed">{ADMIN.bio}</p>
+          <h2 className="font-display text-xl font-bold text-ink-900 dark:text-white">{ADMIN.name}</h2>
+          <p className="text-sm font-medium text-brand-600 dark:text-brand-400">{ADMIN.position} · {ADMIN.department}</p>
+          <p className="mt-2 text-sm text-ink-500 leading-relaxed dark:text-ink-400">{ADMIN.bio}</p>
 
           {/* Contact chips */}
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200">
-              <Mail className="h-3.5 w-3.5 text-ink-400" />
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200 dark:bg-white/5 dark:text-ink-300 dark:ring-white/[0.06]">
+              <Mail className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />
               {ADMIN.email}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200">
-              <Phone className="h-3.5 w-3.5 text-ink-400" />
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200 dark:bg-white/5 dark:text-ink-300 dark:ring-white/[0.06]">
+              <Phone className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />
               {ADMIN.phone}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200">
-              <MapPin className="h-3.5 w-3.5 text-ink-400" />
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200 dark:bg-white/5 dark:text-ink-300 dark:ring-white/[0.06]">
+              <MapPin className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />
               {ADMIN.location}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200">
-              <Globe className="h-3.5 w-3.5 text-ink-400" />
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200 dark:bg-white/5 dark:text-ink-300 dark:ring-white/[0.06]">
+              <Globe className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />
               {ADMIN.timezone}
             </span>
           </div>
 
           {/* Join date */}
-          <p className="mt-2 text-xs text-ink-400">
+          <p className="mt-2 text-xs text-ink-400 dark:text-ink-500">
             Member since {formatDate(ADMIN.joinDate, { month: 'long', year: 'numeric' })}
           </p>
         </div>
@@ -180,22 +180,22 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-brand-500" />
-              <span className="text-sm font-semibold text-ink-800">Profile completion</span>
+              <span className="text-sm font-semibold text-ink-800 dark:text-white">Profile completion</span>
             </div>
-            <span className="font-display text-sm font-bold text-brand-700">{profileCompletion}%</span>
+            <span className="font-display text-sm font-bold text-brand-700 dark:text-brand-400">{profileCompletion}%</span>
           </div>
           <ProgressBar
             value={profileCompletion}
             barClassName="bg-gradient-to-r from-brand-500 to-accent-500"
           />
           {profileCompletion < 100 && (
-            <p className="mt-2 text-xs text-ink-500">Add a profile photo to reach 100%</p>
+            <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">Add a profile photo to reach 100%</p>
           )}
         </div>
 
         {/* ── Live workspace stats ── */}
         <div className="px-4 pb-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400 px-1">Workspace overview</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400 px-1 dark:text-ink-500">Workspace overview</p>
           <div className="grid grid-cols-2 gap-3">
             {[
               { icon: Users, label: 'Active staff', value: activeEmployees, tone: 'text-brand-600 bg-brand-50', page: 'employees' as PageKey },
@@ -206,40 +206,40 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
               <button
                 key={label}
                 onClick={() => go(page)}
-                className="flex items-center gap-3 rounded-xl bg-white p-3 text-left ring-1 ring-ink-200 transition-all hover:ring-brand-300 hover:shadow-card"
+                className="flex items-center gap-3 rounded-xl bg-white p-3 text-left ring-1 ring-ink-200 transition-all hover:ring-brand-300 hover:shadow-card dark:bg-ink-850/60 dark:ring-white/[0.06] dark:hover:ring-brand-500/30"
               >
                 <span className={cn('flex h-9 w-9 items-center justify-center rounded-lg', tone)}>
                   <Icon className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="font-display text-lg font-bold leading-none text-ink-900">{value}</p>
-                  <p className="mt-0.5 text-[11px] text-ink-500">{label}</p>
+                  <p className="font-display text-lg font-bold leading-none text-ink-900 dark:text-white">{value}</p>
+                  <p className="mt-0.5 text-[11px] text-ink-500 dark:text-ink-400">{label}</p>
                 </div>
               </button>
             ))}
           </div>
 
           {/* Task completion strip */}
-          <div className="mt-3 rounded-xl bg-white p-3.5 ring-1 ring-ink-200">
+          <div className="mt-3 rounded-xl bg-white p-3.5 ring-1 ring-ink-200 dark:bg-ink-850/60 dark:ring-white/[0.06]">
             <div className="mb-2 flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm font-semibold text-ink-700">
-                <TrendingUp className="h-4 w-4 text-success-500" />
+              <span className="flex items-center gap-2 text-sm font-semibold text-ink-700 dark:text-ink-200">
+                <TrendingUp className="h-4 w-4 text-success-500 dark:text-success-400" />
                 Task completion rate
               </span>
-              <span className="font-display text-sm font-bold text-success-600">{completionRate}%</span>
+              <span className="font-display text-sm font-bold text-success-600 dark:text-success-400">{completionRate}%</span>
             </div>
             <ProgressBar
               value={completionRate}
               barClassName={completionRate >= 70 ? 'bg-success-500' : completionRate >= 40 ? 'bg-brand-500' : 'bg-warning-500'}
             />
-            <p className="mt-1.5 text-xs text-ink-400">{completedTasks} of {tasks.length} tasks completed</p>
+            <p className="mt-1.5 text-xs text-ink-400 dark:text-ink-500">{completedTasks} of {tasks.length} tasks completed</p>
           </div>
         </div>
 
         {/* ── Quick links ── */}
         <div className="px-4 pb-4">
-          <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-ink-400">Quick navigate</p>
-          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-200">
+          <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-ink-400 dark:text-ink-500">Quick navigate</p>
+          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-200 dark:bg-ink-850/60 dark:ring-white/[0.06]">
             {([
               { icon: Users, label: 'Employees', desc: 'Manage team members', page: 'employees' as PageKey },
               { icon: FolderKanban, label: 'Projects', desc: 'Initiatives & timelines', page: 'projects' as PageKey },
@@ -250,18 +250,18 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
                 key={label}
                 onClick={() => go(page)}
                 className={cn(
-                  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ink-50',
-                  idx < arr.length - 1 && 'border-b border-ink-100',
+                  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ink-50 dark:hover:bg-white/[0.03]',
+                  idx < arr.length - 1 && 'border-b border-ink-100 dark:border-white/[0.06]',
                 )}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-500">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-500 dark:bg-white/5 dark:text-ink-400">
                   <Icon className="h-4 w-4" />
                 </span>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-ink-900">{label}</p>
-                  <p className="text-xs text-ink-500">{desc}</p>
+                  <p className="text-sm font-semibold text-ink-900 dark:text-white">{label}</p>
+                  <p className="text-xs text-ink-500 dark:text-ink-400">{desc}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-ink-300" />
+                <ChevronRight className="h-4 w-4 text-ink-300 dark:text-ink-600" />
               </button>
             ))}
           </div>
@@ -269,8 +269,8 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
 
         {/* ── Preferences ── */}
         <div className="px-4 pb-4">
-          <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-ink-400">Preferences</p>
-          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-200">
+          <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-ink-400 dark:text-ink-500">Preferences</p>
+          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-200 dark:bg-ink-850/60 dark:ring-white/[0.06]">
             {([
               { icon: Bell, label: 'Notifications', desc: 'Manage alerts' },
               { icon: Lock, label: 'Privacy & Security', desc: 'Passwords & sessions' },
@@ -280,18 +280,18 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
               <button
                 key={label}
                 className={cn(
-                  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ink-50',
-                  idx < arr.length - 1 && 'border-b border-ink-100',
+                  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ink-50 dark:hover:bg-white/[0.03]',
+                  idx < arr.length - 1 && 'border-b border-ink-100 dark:border-white/[0.06]',
                 )}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-500">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-500 dark:bg-white/5 dark:text-ink-400">
                   <Icon className="h-4 w-4" />
                 </span>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-ink-900">{label}</p>
-                  <p className="text-xs text-ink-500">{desc}</p>
+                  <p className="text-sm font-semibold text-ink-900 dark:text-white">{label}</p>
+                  <p className="text-xs text-ink-500 dark:text-ink-400">{desc}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-ink-300" />
+                <ChevronRight className="h-4 w-4 text-ink-300 dark:text-ink-600" />
               </button>
             ))}
           </div>
@@ -299,11 +299,11 @@ export function ProfilePanel({ open, onClose, data, onNavigate }: ProfilePanelPr
 
         {/* ── Sign out ── */}
         <div className="mt-auto px-4 pb-8">
-          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-danger-200 bg-danger-50 py-3 text-sm font-semibold text-danger-600 transition-all hover:bg-danger-100 hover:border-danger-300 active:scale-[0.98]">
+          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-danger-200 bg-danger-50 py-3 text-sm font-semibold text-danger-600 transition-all hover:bg-danger-100 hover:border-danger-300 active:scale-[0.98] dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-400 dark:hover:bg-danger-500/15">
             <LogOut className="h-4 w-4" />
             Sign out
           </button>
-          <p className="mt-3 text-center text-xs text-ink-400">Atlas Office OS · v1.0.0</p>
+          <p className="mt-3 text-center text-xs text-ink-400 dark:text-ink-500">Atlas Office OS · v1.0.0</p>
         </div>
       </div>
     </div>,

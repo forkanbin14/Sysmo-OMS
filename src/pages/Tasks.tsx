@@ -142,16 +142,16 @@ export function Tasks({ data }: TasksProps) {
         description={`${tasks.length} tasks across ${projects.length} projects`}
         actions={
           <div className="flex items-center gap-2">
-            <div className="hidden items-center rounded-xl border border-ink-200 bg-white p-0.5 sm:flex">
+            <div className="hidden items-center rounded-xl border border-ink-200 bg-white p-0.5 sm:flex dark:border-white/[0.06] dark:bg-ink-850/60">
               <button
                 onClick={() => setView('board')}
-                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'board' ? 'bg-ink-100 text-ink-900' : 'text-ink-500')}
+                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'board' ? 'bg-ink-100 text-ink-900 dark:bg-ink-700/40 dark:text-white' : 'text-ink-500 dark:text-ink-400')}
               >
                 Board
               </button>
               <button
                 onClick={() => setView('list')}
-                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'list' ? 'bg-ink-100 text-ink-900' : 'text-ink-500')}
+                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'list' ? 'bg-ink-100 text-ink-900 dark:bg-ink-700/40 dark:text-white' : 'text-ink-500 dark:text-ink-400')}
               >
                 List
               </button>
@@ -166,7 +166,7 @@ export function Tasks({ data }: TasksProps) {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-4">
+            <Card key={i} className="p-4 dark:bg-ink-850/60 dark:border-white/[0.06]">
               <Skeleton className="h-5 w-24" />
               <div className="mt-3 space-y-2">
                 <Skeleton className="h-16 w-full" />
@@ -184,16 +184,16 @@ export function Tasks({ data }: TasksProps) {
               onDragLeave={() => setDragOverCol(null)}
               onDrop={(e) => { e.preventDefault(); if (draggingId) handleDragDrop(draggingId, col.key); }}
               className={cn(
-                'rounded-2xl border bg-ink-50/40 p-3 transition-colors',
-                dragOverCol === col.key ? 'border-brand-400 bg-brand-50/40' : 'border-ink-200/70',
+                'rounded-2xl border bg-ink-50/40 p-3 transition-colors dark:bg-ink-900/40',
+                dragOverCol === col.key ? 'border-brand-400 bg-brand-50/40' : 'border-ink-200/70 dark:border-white/[0.06]',
               )}
             >
               <div className="mb-3 flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <span className={cn('h-2 w-2 rounded-full', col.tone)} />
-                  <span className="text-sm font-semibold text-ink-700">{col.label}</span>
+                  <span className="text-sm font-semibold text-ink-700 dark:text-ink-200">{col.label}</span>
                 </div>
-                <span className="rounded-full bg-ink-100 px-2 py-0.5 text-xs font-semibold text-ink-600">
+                <span className="rounded-full bg-ink-100 px-2 py-0.5 text-xs font-semibold text-ink-600 dark:bg-ink-700/40 dark:text-ink-300">
                   {grouped[col.key].length}
                 </span>
               </div>
@@ -207,20 +207,20 @@ export function Tasks({ data }: TasksProps) {
                       onDragStart={() => setDraggingId(task.id)}
                       onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
                       className={cn(
-                        'group cursor-grab rounded-xl border border-ink-200/70 bg-white p-3.5 shadow-soft transition-all active:cursor-grabbing hover:shadow-card hover:-translate-y-0.5',
+                        'group cursor-grab rounded-xl border border-ink-200/70 bg-white p-3.5 shadow-soft transition-all active:cursor-grabbing hover:shadow-card hover:-translate-y-0.5 dark:border-white/[0.06] dark:bg-ink-850/60',
                         draggingId === task.id && 'opacity-40',
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-ink-900">{task.title}</p>
+                        <p className="text-sm font-semibold text-ink-900 dark:text-white">{task.title}</p>
                         <PriorityBadge priority={task.priority} />
                       </div>
                       {task.description && (
-                        <p className="mt-1 line-clamp-2 text-xs text-ink-500">{task.description}</p>
+                        <p className="mt-1 line-clamp-2 text-xs text-ink-500 dark:text-ink-400">{task.description}</p>
                       )}
                       <div className="mt-3 flex items-center justify-between">
                         {task.project ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-ink-500">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-ink-500 dark:text-ink-400">
                             <FolderKanban className="h-3 w-3" /> {task.project.name}
                           </span>
                         ) : <span />}
@@ -228,20 +228,20 @@ export function Tasks({ data }: TasksProps) {
                           <Avatar name={task.assignee.name} src={task.assignee.avatar_url} size="xs" />
                         )}
                       </div>
-                      <div className="mt-2.5 flex items-center justify-between border-t border-ink-100 pt-2.5">
+                      <div className="mt-2.5 flex items-center justify-between border-t border-ink-100 pt-2.5 dark:border-white/[0.06]">
                         <span
                           className={cn(
                             'flex items-center gap-1 text-[11px] font-medium',
-                            due.tone === 'overdue' ? 'text-danger-600' : due.tone === 'soon' ? 'text-warning-600' : 'text-ink-500',
+                            due.tone === 'overdue' ? 'text-danger-600' : due.tone === 'soon' ? 'text-warning-600' : 'text-ink-500 dark:text-ink-400',
                           )}
                         >
                           <CalendarClock className="h-3 w-3" /> {due.label}
                         </span>
                         <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          <button onClick={() => openEdit(task)} className="rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700">
+                          <button onClick={() => openEdit(task)} className="rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700 dark:text-ink-500 dark:hover:bg-ink-700/40 dark:hover:text-ink-200">
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
-                          <button onClick={() => setDeleteTarget(task)} className="rounded-md p-1 text-ink-400 hover:bg-danger-50 hover:text-danger-600">
+                          <button onClick={() => setDeleteTarget(task)} className="rounded-md p-1 text-ink-400 hover:bg-danger-50 hover:text-danger-600 dark:text-ink-500">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -250,7 +250,7 @@ export function Tasks({ data }: TasksProps) {
                   );
                 })}
                 {grouped[col.key].length === 0 && (
-                  <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-ink-200 text-xs text-ink-400">
+                  <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-ink-200 text-xs text-ink-400 dark:border-white/[0.06] dark:text-ink-500">
                     Drop tasks here
                   </div>
                 )}
@@ -259,11 +259,11 @@ export function Tasks({ data }: TasksProps) {
           ))}
         </div>
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500">
+                <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500 dark:border-white/[0.06] dark:bg-ink-900/40 dark:text-ink-400">
                   <th className="px-5 py-3">Task</th>
                   <th className="px-5 py-3">Project</th>
                   <th className="hidden px-5 py-3 md:table-cell">Assignee</th>
@@ -273,28 +273,28 @@ export function Tasks({ data }: TasksProps) {
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-100">
+              <tbody className="divide-y divide-ink-100 dark:divide-white/[0.06]">
                 {tasks.map((task) => {
                   const due = dueLabel(task.due_date);
                   return (
-                    <tr key={task.id} className="group transition-colors hover:bg-ink-50/50">
+                    <tr key={task.id} className="group transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02]">
                       <td className="px-5 py-3">
-                        <p className="font-medium text-ink-900">{task.title}</p>
-                        {task.description && <p className="truncate text-xs text-ink-500">{task.description}</p>}
+                        <p className="font-medium text-ink-900 dark:text-white">{task.title}</p>
+                        {task.description && <p className="truncate text-xs text-ink-500 dark:text-ink-400">{task.description}</p>}
                       </td>
-                      <td className="px-5 py-3 text-ink-600">{task.project?.name ?? '—'}</td>
+                      <td className="px-5 py-3 text-ink-600 dark:text-ink-300">{task.project?.name ?? '—'}</td>
                       <td className="hidden px-5 py-3 md:table-cell">
                         {task.assignee ? (
                           <div className="flex items-center gap-2">
                             <Avatar name={task.assignee.name} src={task.assignee.avatar_url} size="xs" />
-                            <span className="text-ink-700">{task.assignee.name}</span>
+                            <span className="text-ink-700 dark:text-ink-200">{task.assignee.name}</span>
                           </div>
-                        ) : <span className="text-ink-400">Unassigned</span>}
+                        ) : <span className="text-ink-400 dark:text-ink-500">Unassigned</span>}
                       </td>
                       <td className="px-5 py-3"><TaskStatusBadge status={task.status} /></td>
                       <td className="hidden px-5 py-3 sm:table-cell"><PriorityBadge priority={task.priority} /></td>
                       <td className="hidden px-5 py-3 lg:table-cell">
-                        <span className={cn('text-xs font-medium', due.tone === 'overdue' ? 'text-danger-600' : due.tone === 'soon' ? 'text-warning-600' : 'text-ink-500')}>
+                        <span className={cn('text-xs font-medium', due.tone === 'overdue' ? 'text-danger-600' : due.tone === 'soon' ? 'text-warning-600' : 'text-ink-500 dark:text-ink-400')}>
                           {due.label}
                         </span>
                       </td>
@@ -318,7 +318,7 @@ export function Tasks({ data }: TasksProps) {
       )}
 
       {tasks.length === 0 && !loading && (
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <EmptyState
             icon={CheckSquare}
             title="No tasks yet"

@@ -1,4 +1,5 @@
 export type EmployeeStatus = 'active' | 'inactive' | 'on-leave';
+export type EmployeeRole = 'admin' | 'manager' | 'lead' | 'member' | 'viewer';
 export type ProjectStatus = 'planning' | 'active' | 'on-hold' | 'completed';
 export type Priority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'todo' | 'in-progress' | 'review' | 'done';
@@ -22,6 +23,7 @@ export interface Employee {
   department_id: string | null;
   avatar_url: string | null;
   status: EmployeeStatus;
+  role: EmployeeRole;
   hire_date: string | null;
   salary: number | null;
   created_at: string;
@@ -85,8 +87,35 @@ export interface Meeting {
 }
 
 export type DepartmentInput = Pick<Department, 'name' | 'description' | 'head_name' | 'budget'>;
-export type EmployeeInput = Omit<Employee, 'id' | 'created_at' | 'department'>;
+export type EmployeeInput = Omit<Employee, 'id' | 'created_at' | 'department'> & { role: EmployeeRole };
 export type ProjectInput = Omit<Project, 'id' | 'created_at' | 'department' | 'tasks'>;
 export type TaskInput = Omit<Task, 'id' | 'created_at' | 'assignee' | 'project'>;
 export type MeetingInput = Omit<Meeting, 'id' | 'created_at'>;
 export type AttendanceInput = Omit<Attendance, 'id' | 'created_at' | 'employee'>;
+
+export type TransactionType = 'salary' | 'bonus' | 'deduction' | 'reimbursement';
+export type TransactionStatus = 'pending' | 'paid' | 'failed';
+
+export interface SalaryTransaction {
+  id: string;
+  employee_id: string;
+  type: TransactionType;
+  amount: number;
+  description: string | null;
+  payment_date: string;
+  status: TransactionStatus;
+  created_at: string;
+  // joined fields
+  employee?: Employee | null;
+}
+
+export type SalaryTransactionInput = Omit<SalaryTransaction, 'id' | 'created_at' | 'employee'>;
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  target_entity: string | null;
+  target_id: string | null;
+  description: string | null;
+  created_at: string;
+}

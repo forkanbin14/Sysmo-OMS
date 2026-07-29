@@ -28,13 +28,13 @@ export function ConfirmDialog({
       <div className="flex flex-col items-center text-center">
         <div
           className={`mb-4 flex h-12 w-12 items-center justify-center rounded-full ${
-            destructive ? 'bg-danger-50 text-danger-600' : 'bg-brand-50 text-brand-600'
+            destructive ? 'bg-danger-50 text-danger-600 dark:bg-danger-500/15 dark:text-danger-400' : 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
           }`}
         >
           <AlertTriangle className="h-6 w-6" />
         </div>
-        <h2 className="font-display text-lg font-semibold text-ink-900">{title}</h2>
-        <p className="mt-2 text-sm text-ink-500">{message}</p>
+        <h2 className="font-display text-lg font-semibold text-ink-900 dark:text-ink-100">{title}</h2>
+        <p className="mt-2 text-sm text-ink-500 dark:text-ink-400">{message}</p>
         <div className="mt-6 flex w-full gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={loading}>
             Cancel

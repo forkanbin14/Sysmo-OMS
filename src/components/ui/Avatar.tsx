@@ -23,7 +23,7 @@ export function Avatar({ name, src, size = 'md', className, ring = false }: Avat
   const base = cn(
     'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white',
     sizes[size],
-    ring && 'ring-2 ring-white/90 shadow-soft',
+    ring && 'ring-2 ring-white/90 dark:ring-ink-800/90 shadow-soft',
     className,
   );
 

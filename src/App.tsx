@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { useAppData } from '@/hooks/useAppData';
 import { SearchPalette } from '@/components/search/SearchPalette';
 import { ProfilePanel } from '@/components/layout/ProfilePanel';
+import { AIAssistant } from '@/components/ai/AIAssistant';
 import { Dashboard } from '@/pages/Dashboard';
 import { Employees } from '@/pages/Employees';
 import { Departments } from '@/pages/Departments';
@@ -14,15 +15,19 @@ import { Projects } from '@/pages/Projects';
 import { Tasks } from '@/pages/Tasks';
 import { Attendance } from '@/pages/Attendance';
 import { Meetings } from '@/pages/Meetings';
+import { Admin } from '@/pages/Admin';
+import { Settings } from '@/pages/Settings';
 
 const pageMeta: Record<PageKey, { title: string; subtitle: string }> = {
-  dashboard: { title: 'Dashboard', subtitle: 'Your office at a glance' },
-  employees: { title: 'Employees', subtitle: 'Manage your team members' },
+  dashboard:   { title: 'Dashboard',   subtitle: 'Your office at a glance' },
+  employees:   { title: 'Employees',   subtitle: 'Manage your team members' },
   departments: { title: 'Departments', subtitle: 'Organizational structure' },
-  projects: { title: 'Projects', subtitle: 'Track initiatives and progress' },
-  tasks: { title: 'Tasks', subtitle: 'Work items and assignments' },
-  attendance: { title: 'Attendance', subtitle: 'Daily check-ins and presence' },
-  meetings: { title: 'Meetings', subtitle: 'Scheduled team sessions' },
+  projects:    { title: 'Projects',    subtitle: 'Track initiatives and progress' },
+  tasks:       { title: 'Tasks',       subtitle: 'Work items and assignments' },
+  attendance:  { title: 'Attendance',  subtitle: 'Daily check-ins and presence' },
+  meetings:    { title: 'Meetings',    subtitle: 'Scheduled team sessions' },
+  admin:       { title: 'Admin Panel', subtitle: 'Manage roles, transactions & system controls' },
+  settings:    { title: 'Settings',    subtitle: 'Manage your account, preferences and workspace' },
 };
 
 function AppContent() {
@@ -30,6 +35,7 @@ function AppContent() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const data = useAppData();
 
   function navigate(p: PageKey) {
@@ -39,12 +45,16 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Global Cmd+K / Ctrl+K to open search
+  // Global Cmd+K / Ctrl+K to open search, Cmd+J for AI
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setSearchOpen((o) => !o);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        setAiOpen((o) => !o);
       }
     };
     document.addEventListener('keydown', onKey);
@@ -60,7 +70,7 @@ function AppContent() {
   const meta = pageMeta[page];
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-925 text-ink-100 mesh-bg-dark noise">
       <Sidebar
         current={page}
         onNavigate={navigate}
@@ -75,12 +85,13 @@ function AppContent() {
           onOpenMobile={() => setMobileOpen(true)}
           onSearch={() => setSearchOpen(true)}
           onOpenProfile={() => setProfileOpen(true)}
+          onOpenAI={() => setAiOpen(true)}
         />
 
         <main id="main-scroll" className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
           {/* Global error banner */}
           {data.error && !data.loading && (
-            <div className="mb-6 flex items-center gap-3 rounded-xl border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-700 animate-fade-in">
+            <div className="mb-6 flex items-center gap-3 rounded-xl border border-danger-500/20 bg-danger-500/10 px-4 py-3 text-sm text-danger-300 animate-fade-in">
               <AlertCircle className="h-5 w-5 shrink-0" />
               <span className="flex-1">Couldn't load some data: {data.error}</span>
               <Button size="sm" variant="outline" onClick={data.refresh}>
@@ -97,6 +108,8 @@ function AppContent() {
             {page === 'tasks' && <Tasks data={data} />}
             {page === 'attendance' && <Attendance data={data} />}
             {page === 'meetings' && <Meetings data={data} />}
+            {page === 'admin' && <Admin data={data} onNavigate={navigate} />}
+            {page === 'settings' && <Settings />}
           </div>
         </main>
       </div>
@@ -114,6 +127,8 @@ function AppContent() {
         data={data}
         onNavigate={navigate}
       />
+
+      <AIAssistant open={aiOpen} onClose={() => setAiOpen(false)} />
     </div>
   );
 }

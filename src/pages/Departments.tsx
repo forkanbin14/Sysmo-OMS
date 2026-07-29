@@ -130,7 +130,7 @@ export function Departments({ data }: DepartmentsProps) {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="p-5">
+            <Card key={i} className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-12 w-12 rounded-2xl" />
                 <div className="flex-1 space-y-2">
@@ -146,7 +146,7 @@ export function Departments({ data }: DepartmentsProps) {
           ))}
         </div>
       ) : enriched.length === 0 ? (
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <EmptyState
             icon={Building2}
             title="No departments yet"
@@ -160,7 +160,7 @@ export function Departments({ data }: DepartmentsProps) {
             const tone = accentTones[idx % accentTones.length];
             const budgetPct = ((dept.budget ?? 0) / maxBudget) * 100;
             return (
-              <Card key={dept.id} hover className="group overflow-hidden">
+              <Card key={dept.id} hover className="group overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
                 <div className={`h-1.5 w-full ${accentBar[tone]}`} />
                 <CardContent>
                   <div className="flex items-start justify-between">
@@ -174,45 +174,45 @@ export function Departments({ data }: DepartmentsProps) {
                       </Button>
                     </div>
                   </div>
-                  <h3 className="mt-4 font-display text-lg font-semibold text-ink-900">{dept.name}</h3>
-                  <p className="mt-1 line-clamp-2 text-sm text-ink-500">{dept.description ?? 'No description'}</p>
+                  <h3 className="mt-4 font-display text-lg font-semibold text-ink-900 dark:text-white">{dept.name}</h3>
+                  <p className="mt-1 line-clamp-2 text-sm text-ink-500 dark:text-ink-400">{dept.description ?? 'No description'}</p>
 
                   {dept.head_name && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-ink-600">
+                    <div className="mt-4 flex items-center gap-2 text-sm text-ink-600 dark:text-ink-300">
                       <Crown className="h-4 w-4 text-warning-500" />
                       <span>{dept.head_name}</span>
                       <Badge tone="neutral" className="ml-auto">Head</Badge>
                     </div>
                   )}
 
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-ink-100 pt-4">
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-ink-100 pt-4 dark:border-white/[0.06]">
                     <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-ink-400">
+                      <div className="flex items-center justify-center gap-1 text-ink-400 dark:text-ink-500">
                         <Users className="h-3.5 w-3.5" />
                       </div>
-                      <p className="mt-1 font-display text-xl font-bold text-ink-900">{dept.headCount.length}</p>
-                      <p className="text-[11px] text-ink-500">People</p>
+                      <p className="mt-1 font-display text-xl font-bold text-ink-900 dark:text-white">{dept.headCount.length}</p>
+                      <p className="text-[11px] text-ink-500 dark:text-ink-400">People</p>
                     </div>
                     <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-ink-400">
+                      <div className="flex items-center justify-center gap-1 text-ink-400 dark:text-ink-500">
                         <Building2 className="h-3.5 w-3.5" />
                       </div>
-                      <p className="mt-1 font-display text-xl font-bold text-ink-900">{dept.projCount.length}</p>
-                      <p className="text-[11px] text-ink-500">Projects</p>
+                      <p className="mt-1 font-display text-xl font-bold text-ink-900 dark:text-white">{dept.projCount.length}</p>
+                      <p className="text-[11px] text-ink-500 dark:text-ink-400">Projects</p>
                     </div>
                     <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-ink-400">
+                      <div className="flex items-center justify-center gap-1 text-ink-400 dark:text-ink-500">
                         <CircleDollarSign className="h-3.5 w-3.5" />
                       </div>
-                      <p className="mt-1 font-display text-xl font-bold text-ink-900">{((dept.budget ?? 0) / 1000).toFixed(0)}k</p>
-                      <p className="text-[11px] text-ink-500">Budget</p>
+                      <p className="mt-1 font-display text-xl font-bold text-ink-900 dark:text-white">{((dept.budget ?? 0) / 1000).toFixed(0)}k</p>
+                      <p className="text-[11px] text-ink-500 dark:text-ink-400">Budget</p>
                     </div>
                   </div>
 
                   <div className="mt-4">
                     <div className="mb-1.5 flex items-center justify-between text-xs">
-                      <span className="text-ink-500">Budget allocation</span>
-                      <span className="font-semibold text-ink-700">{formatCurrency(dept.budget)}</span>
+                      <span className="text-ink-500 dark:text-ink-400">Budget allocation</span>
+                      <span className="font-semibold text-ink-700 dark:text-ink-200">{formatCurrency(dept.budget)}</span>
                     </div>
                     <ProgressBar value={budgetPct} barClassName={accentBar[tone]} />
                   </div>

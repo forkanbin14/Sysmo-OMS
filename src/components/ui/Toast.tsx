@@ -71,17 +71,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             return (
               <div
                 key={t.id}
-                className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-ink-200 bg-white p-4 shadow-float animate-slide-in-right"
+                className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-ink-200 bg-white p-4 shadow-float animate-slide-in-right dark:border-white/[0.08] dark:bg-ink-850/90 dark:shadow-dark-float dark:backdrop-blur-xl"
               >
                 <span className={cn('absolute left-0 top-0 h-full w-1', c.bar)} />
                 <Icon className={cn('mt-0.5 h-5 w-5 shrink-0', c.tone)} />
                 <div className="flex-1 space-y-0.5">
-                  <p className="text-sm font-semibold text-ink-900">{t.title}</p>
-                  {t.message && <p className="text-xs text-ink-500">{t.message}</p>}
+                  <p className="text-sm font-semibold text-ink-900 dark:text-ink-100">{t.title}</p>
+                  {t.message && <p className="text-xs text-ink-500 dark:text-ink-400">{t.message}</p>}
                 </div>
                 <button
                   onClick={() => remove(t.id)}
-                  className="rounded-md p-1 text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-600"
+                  className="rounded-md p-1 text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-600 dark:text-ink-500 dark:hover:bg-ink-700/60 dark:hover:text-ink-200"
                   aria-label="Dismiss"
                 >
                   <X className="h-4 w-4" />

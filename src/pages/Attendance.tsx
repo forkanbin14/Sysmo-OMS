@@ -145,18 +145,18 @@ export function Attendance({ data }: AttendanceProps) {
           { label: 'Remote', value: summary.remote, tone: 'accent' as const, icon: LogIn },
           { label: 'Absent', value: summary.absent, tone: 'danger' as const, icon: LogOut },
         ].map((s, i) => (
-          <Card key={s.label} hover className="flex items-center gap-3 p-4 animate-slide-in-up" >
+          <Card key={s.label} hover className="flex items-center gap-3 p-4 animate-slide-in-up dark:bg-ink-850/60 dark:border-white/[0.06]" >
             <IconBadge icon={s.icon} tone={s.tone} size="md" />
             <div>
-              <p className="font-display text-2xl font-bold text-ink-900">{s.value}</p>
-              <p className="text-xs text-ink-500">{s.label} {isToday ? 'today' : 'that day'}</p>
+              <p className="font-display text-2xl font-bold text-ink-900 dark:text-white">{s.value}</p>
+              <p className="text-xs text-ink-500 dark:text-ink-400">{s.label} {isToday ? 'today' : 'that day'}</p>
             </div>
           </Card>
         ))}
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 dark:bg-ink-850/60 dark:border-white/[0.06]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="flex items-center gap-2">
             <Input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="w-auto" />
@@ -167,7 +167,7 @@ export function Attendance({ data }: AttendanceProps) {
             )}
           </div>
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400 dark:text-ink-500" />
             <Input placeholder="Search employee…" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -177,7 +177,7 @@ export function Attendance({ data }: AttendanceProps) {
                 onClick={() => setStatusFilter(f.key)}
                 className={cn(
                   'rounded-lg px-3 py-1.5 text-sm font-medium transition-all',
-                  statusFilter === f.key ? 'bg-ink-900 text-white' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:bg-ink-50',
+                  statusFilter === f.key ? 'bg-ink-900 text-white' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:bg-ink-50 dark:bg-ink-850/60 dark:text-ink-300 dark:ring-white/[0.06] dark:hover:bg-white/[0.02]',
                 )}
               >
                 {f.label}
@@ -189,7 +189,7 @@ export function Attendance({ data }: AttendanceProps) {
 
       {/* List */}
       {loading ? (
-        <Card className="divide-y divide-ink-100">
+        <Card className="divide-y divide-ink-100 dark:divide-white/[0.06] dark:bg-ink-850/60 dark:border-white/[0.06]">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-4">
               <Skeleton className="h-10 w-10 rounded-full" />
@@ -202,7 +202,7 @@ export function Attendance({ data }: AttendanceProps) {
           ))}
         </Card>
       ) : filtered.length === 0 ? (
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <EmptyState
             icon={CalendarCheck}
             title="No attendance records"
@@ -211,11 +211,11 @@ export function Attendance({ data }: AttendanceProps) {
           />
         </Card>
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500">
+                <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500 dark:border-white/[0.06] dark:bg-ink-900/40 dark:text-ink-400">
                   <th className="px-5 py-3">Employee</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="hidden px-5 py-3 sm:table-cell">Check In</th>
@@ -224,26 +224,26 @@ export function Attendance({ data }: AttendanceProps) {
                   {isToday && <th className="px-5 py-3 text-right">Quick Action</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-100">
+              <tbody className="divide-y divide-ink-100 dark:divide-white/[0.06]">
                 {filtered.map((rec) => (
-                  <tr key={rec.id} className="transition-colors hover:bg-ink-50/50">
+                  <tr key={rec.id} className="transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02]">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={rec.employee?.name ?? '?'} src={rec.employee?.avatar_url} size="sm" />
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-ink-900">{rec.employee?.name ?? 'Unknown'}</p>
-                          <p className="truncate text-xs text-ink-500">{rec.employee?.position}</p>
+                          <p className="truncate font-semibold text-ink-900 dark:text-white">{rec.employee?.name ?? 'Unknown'}</p>
+                          <p className="truncate text-xs text-ink-500 dark:text-ink-400">{rec.employee?.position}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-3"><AttendanceBadge status={rec.status} /></td>
-                    <td className="hidden px-5 py-3 text-ink-600 sm:table-cell">
-                      <span className="flex items-center gap-1.5"><LogIn className="h-3.5 w-3.5 text-ink-400" />{formatTime(rec.check_in)}</span>
+                    <td className="hidden px-5 py-3 text-ink-600 sm:table-cell dark:text-ink-300">
+                      <span className="flex items-center gap-1.5"><LogIn className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />{formatTime(rec.check_in)}</span>
                     </td>
-                    <td className="hidden px-5 py-3 text-ink-600 sm:table-cell">
-                      <span className="flex items-center gap-1.5"><LogOut className="h-3.5 w-3.5 text-ink-400" />{formatTime(rec.check_out)}</span>
+                    <td className="hidden px-5 py-3 text-ink-600 sm:table-cell dark:text-ink-300">
+                      <span className="flex items-center gap-1.5"><LogOut className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />{formatTime(rec.check_out)}</span>
                     </td>
-                    <td className="hidden px-5 py-3 text-ink-600 lg:table-cell">{rec.employee?.department?.name ?? '—'}</td>
+                    <td className="hidden px-5 py-3 text-ink-600 lg:table-cell dark:text-ink-300">{rec.employee?.department?.name ?? '—'}</td>
                     {isToday && (
                       <td className="px-5 py-3 text-right">
                         {rec.check_in ? (

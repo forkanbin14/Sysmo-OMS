@@ -42,6 +42,7 @@ const emptyForm: EmployeeInput = {
   department_id: '',
   avatar_url: '',
   status: 'active',
+  role: 'member',
   hire_date: new Date().toISOString().slice(0, 10),
   salary: 0,
 };
@@ -94,6 +95,7 @@ export function Employees({ data }: EmployeesProps) {
       department_id: emp.department_id ?? '',
       avatar_url: emp.avatar_url ?? '',
       status: emp.status,
+      role: emp.role,
       hire_date: emp.hire_date ?? new Date().toISOString().slice(0, 10),
       salary: emp.salary ?? 0,
     });
@@ -155,10 +157,10 @@ export function Employees({ data }: EmployeesProps) {
       />
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 dark:bg-ink-850/60 dark:border-white/[0.06]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400 dark:text-ink-500" />
             <Input
               placeholder="Search by name, email or role…"
               value={query}
@@ -179,16 +181,16 @@ export function Employees({ data }: EmployeesProps) {
               <option value="on-leave">On Leave</option>
               <option value="inactive">Inactive</option>
             </Select>
-            <div className="hidden items-center rounded-xl border border-ink-200 bg-white p-0.5 sm:flex">
+            <div className="hidden items-center rounded-xl border border-ink-200 bg-white p-0.5 sm:flex dark:border-white/[0.06] dark:bg-ink-850/60">
               <button
                 onClick={() => setView('grid')}
-                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'grid' ? 'bg-ink-100 text-ink-900' : 'text-ink-500')}
+                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'grid' ? 'bg-ink-100 text-ink-900 dark:bg-ink-700/40 dark:text-white' : 'text-ink-500 dark:text-ink-400')}
               >
                 Grid
               </button>
               <button
                 onClick={() => setView('table')}
-                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'table' ? 'bg-ink-100 text-ink-900' : 'text-ink-500')}
+                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', view === 'table' ? 'bg-ink-100 text-ink-900 dark:bg-ink-700/40 dark:text-white' : 'text-ink-500 dark:text-ink-400')}
               >
                 Table
               </button>
@@ -201,7 +203,7 @@ export function Employees({ data }: EmployeesProps) {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="p-5">
+            <Card key={i} className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="flex-1 space-y-2">
@@ -217,7 +219,7 @@ export function Employees({ data }: EmployeesProps) {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <EmptyState
             icon={Users}
             title="No employees found"
@@ -228,41 +230,41 @@ export function Employees({ data }: EmployeesProps) {
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 stagger">
           {filtered.map((emp) => (
-            <Card key={emp.id} hover className="group p-5">
+            <Card key={emp.id} hover className="group p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
               <div className="flex items-start gap-3">
                 <Avatar name={emp.name} src={emp.avatar_url} size="lg" ring />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-display text-base font-semibold text-ink-900">{emp.name}</p>
-                      <p className="truncate text-sm text-ink-500">{emp.position ?? 'No position set'}</p>
+                      <p className="truncate font-display text-base font-semibold text-ink-900 dark:text-white">{emp.name}</p>
+                      <p className="truncate text-sm text-ink-500 dark:text-ink-400">{emp.position ?? 'No position set'}</p>
                     </div>
                     <EmployeeStatusBadge status={emp.status} />
                   </div>
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-ink-600">
-                  <Mail className="h-4 w-4 text-ink-400" />
+                <div className="flex items-center gap-2 text-ink-600 dark:text-ink-300">
+                  <Mail className="h-4 w-4 text-ink-400 dark:text-ink-500" />
                   <span className="truncate">{emp.email}</span>
                 </div>
                 {emp.phone && (
-                  <div className="flex items-center gap-2 text-ink-600">
-                    <Phone className="h-4 w-4 text-ink-400" />
+                  <div className="flex items-center gap-2 text-ink-600 dark:text-ink-300">
+                    <Phone className="h-4 w-4 text-ink-400 dark:text-ink-500" />
                     <span>{emp.phone}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-ink-600">
-                  <Building2 className="h-4 w-4 text-ink-400" />
+                <div className="flex items-center gap-2 text-ink-600 dark:text-ink-300">
+                  <Building2 className="h-4 w-4 text-ink-400 dark:text-ink-500" />
                   <span>{emp.department?.name ?? 'Unassigned'}</span>
                 </div>
-                <div className="flex items-center gap-2 text-ink-600">
-                  <CalendarDays className="h-4 w-4 text-ink-400" />
+                <div className="flex items-center gap-2 text-ink-600 dark:text-ink-300">
+                  <CalendarDays className="h-4 w-4 text-ink-400 dark:text-ink-500" />
                   <span>Joined {formatDate(emp.hire_date, { month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-4">
-                <span className="text-sm font-semibold text-ink-900">{formatCurrency(emp.salary)}</span>
+              <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-4 dark:border-white/[0.06]">
+                <span className="text-sm font-semibold text-ink-900 dark:text-white">{formatCurrency(emp.salary)}</span>
                 <div className="flex gap-1.5">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(emp)} className="h-8 w-8">
                     <Pencil className="h-4 w-4" />
@@ -276,11 +278,11 @@ export function Employees({ data }: EmployeesProps) {
           ))}
         </div>
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500">
+                <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500 dark:border-white/[0.06] dark:bg-ink-900/40 dark:text-ink-400">
                   <th className="px-5 py-3">Employee</th>
                   <th className="px-5 py-3">Department</th>
                   <th className="px-5 py-3">Status</th>
@@ -289,22 +291,22 @@ export function Employees({ data }: EmployeesProps) {
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-100">
+              <tbody className="divide-y divide-ink-100 dark:divide-white/[0.06]">
                 {filtered.map((emp) => (
-                  <tr key={emp.id} className="group transition-colors hover:bg-ink-50/50">
+                  <tr key={emp.id} className="group transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02]">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={emp.name} src={emp.avatar_url} size="sm" />
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-ink-900">{emp.name}</p>
-                          <p className="truncate text-xs text-ink-500">{emp.position}</p>
+                          <p className="truncate font-semibold text-ink-900 dark:text-white">{emp.name}</p>
+                          <p className="truncate text-xs text-ink-500 dark:text-ink-400">{emp.position}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-ink-600">{emp.department?.name ?? '—'}</td>
+                    <td className="px-5 py-3 text-ink-600 dark:text-ink-300">{emp.department?.name ?? '—'}</td>
                     <td className="px-5 py-3"><EmployeeStatusBadge status={emp.status} /></td>
-                    <td className="hidden px-5 py-3 text-ink-600 lg:table-cell">{formatDate(emp.hire_date)}</td>
-                    <td className="hidden px-5 py-3 font-medium text-ink-900 sm:table-cell">{formatCurrency(emp.salary)}</td>
+                    <td className="hidden px-5 py-3 text-ink-600 lg:table-cell dark:text-ink-300">{formatDate(emp.hire_date)}</td>
+                    <td className="hidden px-5 py-3 font-medium text-ink-900 sm:table-cell dark:text-white">{formatCurrency(emp.salary)}</td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-1.5">
                         <Button variant="ghost" size="icon" onClick={() => openEdit(emp)} className="h-8 w-8">

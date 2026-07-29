@@ -127,12 +127,12 @@ export function Meetings({ data }: MeetingsProps) {
     const month = meetingDate.toLocaleDateString('en-US', { month: 'short' });
     const isToday = m.meeting_date === new Date().toISOString().slice(0, 10);
     return (
-      <Card hover className={cn('group p-5', isPast && 'opacity-75')}>
+      <Card hover className={cn('group p-5', isPast && 'opacity-75', 'dark:bg-ink-850/60 dark:border-white/[0.06]')}>
         <div className="flex items-start gap-4">
           <div
             className={cn(
               'flex h-14 w-14 flex-col items-center justify-center rounded-2xl shrink-0',
-              isToday ? 'bg-gradient-to-br from-brand-500 to-accent-500 text-white' : isPast ? 'bg-ink-100 text-ink-500' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
+              isToday ? 'bg-gradient-to-br from-brand-500 to-accent-500 text-white' : isPast ? 'bg-ink-100 text-ink-500 dark:bg-ink-700/40 dark:text-ink-400' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
             )}
           >
             <span className="text-[10px] font-semibold uppercase">{day}</span>
@@ -142,8 +142,8 @@ export function Meetings({ data }: MeetingsProps) {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="truncate font-display text-base font-semibold text-ink-900">{m.title}</h3>
-                <p className="mt-0.5 line-clamp-1 text-sm text-ink-500">{m.agenda ?? 'No agenda set'}</p>
+                <h3 className="truncate font-display text-base font-semibold text-ink-900 dark:text-white">{m.title}</h3>
+                <p className="mt-0.5 line-clamp-1 text-sm text-ink-500 dark:text-ink-400">{m.agenda ?? 'No agenda set'}</p>
               </div>
               <div className="flex shrink-0 gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
                 <Button variant="ghost" size="icon" onClick={() => openEdit(m)} className="h-8 w-8">
@@ -154,7 +154,7 @@ export function Meetings({ data }: MeetingsProps) {
                 </Button>
               </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-500">
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-500 dark:text-ink-400">
               <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {m.start_time.slice(0, 5)} · {m.duration_minutes}m</span>
               {m.location && <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {m.location}</span>}
               <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {m.attendees.length} attending</span>
@@ -186,7 +186,7 @@ export function Meetings({ data }: MeetingsProps) {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-5">
+            <Card key={i} className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
               <div className="flex gap-4">
                 <Skeleton className="h-14 w-14 rounded-2xl" />
                 <div className="flex-1 space-y-2">
@@ -199,7 +199,7 @@ export function Meetings({ data }: MeetingsProps) {
           ))}
         </div>
       ) : meetings.length === 0 ? (
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <EmptyState
             icon={CalendarClock}
             title="No meetings scheduled"
@@ -213,7 +213,7 @@ export function Meetings({ data }: MeetingsProps) {
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <IconBadge icon={CalendarClock} tone="brand" size="sm" />
-                <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-500">Upcoming</h2>
+                <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400">Upcoming</h2>
               </div>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 stagger">
                 {upcoming.map((m) => <MeetingCard key={m.id} m={m} isPast={false} />)}
@@ -224,7 +224,7 @@ export function Meetings({ data }: MeetingsProps) {
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <IconBadge icon={Clock} tone="neutral" size="sm" />
-                <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-500">Past Meetings</h2>
+                <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400">Past Meetings</h2>
               </div>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {past.map((m) => <MeetingCard key={m.id} m={m} isPast />)}
@@ -276,7 +276,7 @@ export function Meetings({ data }: MeetingsProps) {
             <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Room A — 2nd Floor" />
           </Field>
           <Field label="Attendees" hint="Tap to add or remove people">
-            <div className="flex flex-wrap gap-2 rounded-xl border border-ink-200 bg-white p-3">
+            <div className="flex flex-wrap gap-2 rounded-xl border border-ink-200 bg-white p-3 dark:border-white/[0.06] dark:bg-ink-850/60">
               {PEOPLE.map((name) => {
                 const selected = form.attendees.includes(name);
                 return (
@@ -286,7 +286,7 @@ export function Meetings({ data }: MeetingsProps) {
                     onClick={() => toggleAttendee(name)}
                     className={cn(
                       'rounded-full px-3 py-1 text-xs font-medium transition-all',
-                      selected ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-600 hover:bg-ink-200',
+                      selected ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-700/40 dark:text-ink-300 dark:hover:bg-white/5',
                     )}
                   >
                     {name}

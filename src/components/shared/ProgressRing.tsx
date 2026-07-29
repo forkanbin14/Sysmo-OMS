@@ -16,7 +16,7 @@ export function ProgressRing({
   size = 64,
   strokeWidth = 6,
   className,
-  trackClassName = 'text-ink-200',
+  trackClassName = 'text-ink-200 dark:text-ink-700/60',
   barClassName = 'text-brand-500',
   showLabel = true,
   label,
@@ -53,7 +53,7 @@ export function ProgressRing({
         />
       </svg>
       {showLabel && (
-        <span className="absolute font-display text-sm font-bold text-ink-900">
+        <span className="absolute font-display text-sm font-bold text-ink-900 dark:text-ink-100">
           {label ?? `${Math.round(clamped)}%`}
         </span>
       )}

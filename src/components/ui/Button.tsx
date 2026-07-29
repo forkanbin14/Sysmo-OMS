@@ -13,15 +13,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand-600 text-white shadow-soft hover:bg-brand-700 hover:shadow-glow focus-visible:ring-brand-500/30',
+    'bg-brand-600 text-white shadow-soft hover:bg-brand-500 hover:shadow-glow focus-visible:ring-brand-500/30 dark:hover:bg-brand-500 dark:shadow-dark-glow',
   secondary:
-    'bg-ink-100 text-ink-800 hover:bg-ink-200 focus-visible:ring-ink-400/30',
+    'bg-ink-100 text-ink-800 hover:bg-ink-150 focus-visible:ring-ink-400/30 dark:bg-ink-700/50 dark:text-ink-100 dark:hover:bg-ink-600/50',
   ghost:
-    'text-ink-600 hover:bg-ink-100 hover:text-ink-900 focus-visible:ring-ink-400/30',
+    'text-ink-600 hover:bg-ink-100 hover:text-ink-900 focus-visible:ring-ink-400/30 dark:text-ink-400 dark:hover:bg-ink-700/40 dark:hover:text-ink-100',
   danger:
-    'bg-danger-600 text-white shadow-soft hover:bg-danger-700 focus-visible:ring-danger-500/30',
+    'bg-danger-600 text-white shadow-soft hover:bg-danger-500 focus-visible:ring-danger-500/30',
   outline:
-    'border border-ink-200 bg-white text-ink-700 hover:border-ink-300 hover:bg-ink-50 focus-visible:ring-ink-400/30',
+    'border border-ink-200 bg-white text-ink-700 hover:border-ink-300 hover:bg-ink-50 focus-visible:ring-ink-400/30 dark:border-ink-600/60 dark:bg-ink-800/50 dark:text-ink-200 dark:hover:bg-ink-700/50 dark:hover:border-ink-500/60',
 };
 
 const sizes: Record<Size, string> = {

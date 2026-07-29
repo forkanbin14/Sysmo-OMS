@@ -29,7 +29,7 @@ import { generateRecommendations, type Recommendation } from '@/lib/recommendati
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
 
-type Page = 'dashboard' | 'employees' | 'departments' | 'projects' | 'tasks' | 'attendance' | 'meetings';
+type Page = 'dashboard' | 'employees' | 'departments' | 'projects' | 'tasks' | 'attendance' | 'meetings' | 'admin' | 'settings';
 
 interface SearchPaletteProps {
   open: boolean;

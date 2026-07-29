@@ -4,34 +4,37 @@
 
 @layer base {
   * {
-    @apply border-ink-200;
+    @apply border-ink-200 dark:border-ink-700/60;
   }
 
   html {
     scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   body {
     @apply bg-ink-50 text-ink-900 font-sans antialiased;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    @apply dark:bg-ink-925 dark:text-ink-100;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
     @apply bg-brand-200 text-brand-900;
+    @apply dark:bg-brand-500/30 dark:text-brand-100;
   }
 
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
     @apply bg-ink-200 rounded-full border-2 border-solid border-transparent bg-clip-content;
+    @apply dark:bg-ink-600 dark:hover:bg-ink-500;
   }
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-ink-300;
@@ -39,32 +42,54 @@
 }
 
 @layer components {
+  /* ── Glassmorphism ── */
   .glass {
     @apply bg-white/70 backdrop-blur-xl border border-white/60;
+    @apply dark:bg-ink-850/70 dark:border-white/[0.06];
+  }
+  .glass-strong {
+    @apply bg-white/85 backdrop-blur-2xl border border-white/80;
+    @apply dark:bg-ink-800/85 dark:border-white/[0.08];
+  }
+  .glass-panel {
+    @apply bg-ink-850/80 backdrop-blur-xl border border-white/[0.06];
   }
 
+  /* ── Cards ── */
   .card-base {
     @apply bg-white rounded-2xl border border-ink-200/80 shadow-soft;
+    @apply dark:bg-ink-850/60 dark:border-white/[0.06] dark:shadow-dark-soft dark:backdrop-blur-xl;
   }
-
   .card-hover {
     @apply transition-all duration-300 hover:shadow-card hover:-translate-y-0.5;
+    @apply dark:hover:shadow-dark-card dark:hover:border-white/[0.10];
+  }
+  .card-glass {
+    @apply rounded-2xl border border-white/[0.06] bg-ink-850/50 backdrop-blur-xl;
+    @apply dark:shadow-dark-soft;
   }
 
+  /* ── Inputs ── */
   .input-base {
     @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900
       placeholder:text-ink-400 transition-all duration-200
       focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 focus:outline-none;
+    @apply dark:border-white/[0.08] dark:bg-ink-900/60 dark:text-ink-100
+      dark:placeholder:text-ink-400 dark:focus:border-brand-400
+      dark:focus:ring-brand-500/15;
   }
 
+  /* ── Buttons ── */
   .btn-base {
     @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold
       transition-all duration-200 active:scale-[0.97] disabled:opacity-50
       disabled:pointer-events-none whitespace-nowrap;
   }
 
+  /* ── Skeleton ── */
   .skeleton {
     @apply relative overflow-hidden bg-ink-100/80 rounded-md;
+    @apply dark:bg-ink-700/50;
   }
   .skeleton::after {
     content: '';
@@ -77,6 +102,42 @@
     );
     background-size: 1000px 100%;
     animation: shimmer 1.6s linear infinite;
+  }
+
+  /* ── Gradient text ── */
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-400 via-accent-400 to-brand-500 bg-clip-text text-transparent;
+  }
+  .text-gradient-warm {
+    @apply bg-gradient-to-r from-warning-400 via-danger-400 to-warning-500 bg-clip-text text-transparent;
+  }
+
+  /* ── Mesh background ── */
+  .mesh-bg {
+    background-image:
+      radial-gradient(at 0% 0%, rgb(28 111 245 / 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgb(6 174 209 / 0.06) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgb(28 111 245 / 0.04) 0px, transparent 50%);
+  }
+  .mesh-bg-dark {
+    background-image:
+      radial-gradient(at 0% 0%, rgb(28 111 245 / 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgb(6 174 209 / 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgb(227 84 84 / 0.06) 0px, transparent 50%);
+  }
+
+  /* ── Noise texture ── */
+  .noise {
+    position: relative;
+  }
+  .noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.015;
+    pointer-events: none;
+    mix-blend-mode: overlay;
   }
 }
 
@@ -102,4 +163,12 @@
   .stagger > *:nth-child(6) { animation-delay: 0.24s; }
   .stagger > *:nth-child(7) { animation-delay: 0.28s; }
   .stagger > *:nth-child(8) { animation-delay: 0.32s; }
+
+  /* Dark-mode elevation utility for interactive surfaces */
+  .surface-raised {
+    @apply dark:bg-ink-800/50 dark:border-white/[0.08];
+  }
+  .surface-sunken {
+    @apply dark:bg-ink-900/40 dark:border-white/[0.04];
+  }
 }

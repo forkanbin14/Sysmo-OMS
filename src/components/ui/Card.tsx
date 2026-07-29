@@ -9,6 +9,10 @@ export function Card({ className, hover = false, ...props }: CardProps) {
   return <div className={cn('card-base', hover && 'card-hover', className)} {...props} />;
 }
 
+export function GlassCard({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('card-glass', className)} {...props} />;
+}
+
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div className={cn('flex items-center justify-between gap-4 px-5 pt-5', className)} {...props} />;
 }

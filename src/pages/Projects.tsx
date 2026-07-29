@@ -142,12 +142,12 @@ export function Projects({ data }: ProjectsProps) {
             onClick={() => setFilter(f.key)}
             className={cn(
               'rounded-xl px-3.5 py-2 text-sm font-medium transition-all',
-              filter === f.key ? 'bg-ink-900 text-white shadow-soft' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:bg-ink-50',
+              filter === f.key ? 'bg-ink-900 text-white shadow-soft' : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:bg-ink-50 dark:bg-ink-850/60 dark:text-ink-300 dark:ring-white/[0.06] dark:hover:bg-white/[0.02]',
             )}
           >
             {f.label}
             {f.key !== 'all' && (
-              <span className={cn('ml-2', filter === f.key ? 'text-ink-300' : 'text-ink-400')}>
+              <span className={cn('ml-2', filter === f.key ? 'text-ink-300' : 'text-ink-400 dark:text-ink-500')}>
                 {projects.filter((p) => p.status === f.key).length}
               </span>
             )}
@@ -158,7 +158,7 @@ export function Projects({ data }: ProjectsProps) {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-5">
+            <Card key={i} className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="h-5 w-20 rounded-full" />
@@ -170,7 +170,7 @@ export function Projects({ data }: ProjectsProps) {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <EmptyState
             icon={FolderKanban}
             title="No projects found"
@@ -186,13 +186,13 @@ export function Projects({ data }: ProjectsProps) {
             const daysLeft = daysFromNow(proj.due_date);
             const overdue = daysLeft < 0 && proj.status !== 'completed';
             return (
-              <Card key={proj.id} hover className="group p-5">
+              <Card key={proj.id} hover className="group p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-start gap-3">
                     <IconBadge icon={FolderKanban} tone="brand" size="lg" />
                     <div className="min-w-0">
-                      <h3 className="truncate font-display text-base font-semibold text-ink-900">{proj.name}</h3>
-                      <p className="mt-0.5 line-clamp-2 text-sm text-ink-500">{proj.description ?? 'No description'}</p>
+                      <h3 className="truncate font-display text-base font-semibold text-ink-900 dark:text-white">{proj.name}</h3>
+                      <p className="mt-0.5 line-clamp-2 text-sm text-ink-500 dark:text-ink-400">{proj.description ?? 'No description'}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
@@ -209,7 +209,7 @@ export function Projects({ data }: ProjectsProps) {
                   <ProjectStatusBadge status={proj.status} />
                   <PriorityBadge priority={proj.priority} />
                   {proj.department && (
-                    <span className="inline-flex items-center gap-1 text-xs text-ink-500">
+                    <span className="inline-flex items-center gap-1 text-xs text-ink-500 dark:text-ink-400">
                       <Building2 className="h-3.5 w-3.5" /> {proj.department.name}
                     </span>
                   )}
@@ -217,8 +217,8 @@ export function Projects({ data }: ProjectsProps) {
 
                 <div className="mt-4">
                   <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="font-medium text-ink-700">Progress</span>
-                    <span className="font-semibold text-ink-900">{proj.progress}%</span>
+                    <span className="font-medium text-ink-700 dark:text-ink-200">Progress</span>
+                    <span className="font-semibold text-ink-900 dark:text-white">{proj.progress}%</span>
                   </div>
                   <ProgressBar
                     value={proj.progress}
@@ -226,8 +226,8 @@ export function Projects({ data }: ProjectsProps) {
                   />
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-4 text-sm">
-                  <div className="flex items-center gap-4 text-ink-500">
+                <div className="mt-4 flex items-center justify-between border-t border-ink-100 pt-4 text-sm dark:border-white/[0.06]">
+                  <div className="flex items-center gap-4 text-ink-500 dark:text-ink-400">
                     <span className="flex items-center gap-1.5">
                       <CalendarRange className="h-4 w-4" />
                       {formatDate(proj.start_date, { month: 'short', day: 'numeric' })} → {formatDate(proj.due_date, { month: 'short', day: 'numeric' })}
@@ -240,7 +240,7 @@ export function Projects({ data }: ProjectsProps) {
                   {overdue ? (
                     <span className="text-xs font-semibold text-danger-600">{Math.abs(daysLeft)}d overdue</span>
                   ) : proj.status !== 'completed' && proj.due_date ? (
-                    <span className={cn('text-xs font-medium', daysLeft <= 7 ? 'text-warning-600' : 'text-ink-500')}>
+                    <span className={cn('text-xs font-medium', daysLeft <= 7 ? 'text-warning-600' : 'text-ink-500 dark:text-ink-400')}>
                       {daysLeft === 0 ? 'Due today' : `${daysLeft}d left`}
                     </span>
                   ) : null}

@@ -13,7 +13,7 @@ export function Field({ label, hint, error, required, children }: FieldProps) {
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-ink-700">
+        <label className="block text-sm font-medium text-ink-700 dark:text-ink-300">
           {label}
           {required && <span className="ml-0.5 text-danger-500">*</span>}
         </label>
@@ -22,7 +22,7 @@ export function Field({ label, hint, error, required, children }: FieldProps) {
       {error ? (
         <p className="text-xs font-medium text-danger-600">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-ink-400">{hint}</p>
+        <p className="text-xs text-ink-400 dark:text-ink-500">{hint}</p>
       ) : null}
     </div>
   );

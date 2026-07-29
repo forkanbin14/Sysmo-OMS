@@ -100,7 +100,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
   return (
     <div className="space-y-6">
       {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger">
         <StatCard
           label="Active Employees"
           value={stats.activeEmployees}
@@ -144,7 +144,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Task completion donut */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 dark:bg-ink-850/60 dark:border-white/[0.06]">
           <CardHeader>
             <div>
               <CardTitle>Task Completion</CardTitle>
@@ -173,13 +173,13 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
         </Card>
 
         {/* Attendance bar chart */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 dark:bg-ink-850/60 dark:border-white/[0.06]">
           <CardHeader>
             <div>
               <CardTitle>Attendance Trend</CardTitle>
               <CardDescription>Last 7 working days</CardDescription>
             </div>
-            <div className="hidden items-center gap-4 text-xs text-ink-500 sm:flex">
+            <div className="hidden items-center gap-4 text-xs text-ink-500 dark:text-ink-400 sm:flex">
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success-500" /> Present</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-warning-500" /> Late</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent-500" /> Remote</span>
@@ -187,7 +187,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           </CardHeader>
           <CardContent>
             {attendanceChart.length === 0 ? (
-              <div className="flex h-48 items-center justify-center text-sm text-ink-400">No attendance records yet</div>
+              <div className="flex h-48 items-center justify-center text-sm text-ink-400 dark:text-ink-500">No attendance records yet</div>
             ) : (
               <div className="flex h-52 items-end justify-between gap-3 pt-4">
                 {attendanceChart.map(([date, v]) => {
@@ -204,11 +204,11 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                           {v.late > 0 && <div className="bg-warning-500" style={{ flexGrow: v.late }} />}
                           {v.remote > 0 && <div className="bg-accent-500" style={{ flexGrow: v.remote }} />}
                         </div>
-                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-ink-900 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-ink-900 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-ink-700">
                           {total}
                         </span>
                       </div>
-                      <span className="text-[11px] font-medium text-ink-500">{formatDateShort(date)}</span>
+                      <span className="text-[11px] font-medium text-ink-500 dark:text-ink-400">{formatDateShort(date)}</span>
                     </div>
                   );
                 })}
@@ -220,7 +220,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
 
       {/* Budget + Department headcount */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 dark:bg-ink-850/60 dark:border-white/[0.06]">
           <CardHeader>
             <div>
               <CardTitle>Total Department Budget</CardTitle>
@@ -229,14 +229,14 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success-50 text-success-600 ring-1 ring-success-100">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success-50 text-success-600 ring-1 ring-success-100 dark:bg-success-500/15 dark:text-success-400 dark:ring-success-500/25">
                 <CircleDollarSign className="h-8 w-8" />
               </div>
               <div>
-                <p className="font-display text-3xl font-bold tracking-tight text-ink-900">
+                <p className="font-display text-3xl font-bold tracking-tight text-ink-900 dark:text-white">
                   {formatCurrency(stats.totalBudget)}
                 </p>
-                <p className="mt-0.5 text-sm text-ink-500">across {departments.length} departments</p>
+                <p className="mt-0.5 text-sm text-ink-500 dark:text-ink-400">across {departments.length} departments</p>
               </div>
             </div>
             <div className="mt-5 space-y-3">
@@ -245,8 +245,8 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                 return (
                   <div key={d.id}>
                     <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="font-medium text-ink-700">{d.name}</span>
-                      <span className="text-ink-500">{formatCurrency(d.budget)}</span>
+                      <span className="font-medium text-ink-700 dark:text-ink-200">{d.name}</span>
+                      <span className="text-ink-500 dark:text-ink-400">{formatCurrency(d.budget)}</span>
                     </div>
                     <ProgressBar value={budgetPct} barClassName="bg-gradient-to-r from-brand-400 to-accent-400" />
                   </div>
@@ -257,7 +257,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
         </Card>
 
         {/* Upcoming meetings */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 dark:bg-ink-850/60 dark:border-white/[0.06]">
           <CardHeader>
             <div>
               <CardTitle>Upcoming Meetings</CardTitle>
@@ -265,7 +265,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('meetings')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
               View all <ArrowUpRight className="h-4 w-4" />
             </button>
@@ -281,19 +281,19 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                   const dateNum = meetingDate.getDate();
                   const isToday = m.meeting_date === new Date().toISOString().slice(0, 10);
                   return (
-                    <div key={m.id} className="flex items-center gap-4 py-3.5 transition-colors hover:bg-ink-50/50 -mx-2 px-2 rounded-lg">
+                    <div key={m.id} className="flex items-center gap-4 py-3.5 transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg">
                       <div
                         className={cn(
                           'flex h-12 w-12 flex-col items-center justify-center rounded-xl text-center shrink-0',
-                          isToday ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-700',
+                          isToday ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-700 dark:bg-ink-700/40 dark:text-ink-300',
                         )}
                       >
                         <span className="text-[10px] font-semibold uppercase">{day}</span>
                         <span className="font-display text-lg font-bold leading-none">{dateNum}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-ink-900">{m.title}</p>
-                        <p className="flex items-center gap-2 text-xs text-ink-500">
+                        <p className="truncate text-sm font-semibold text-ink-900 dark:text-white">{m.title}</p>
+                        <p className="flex items-center gap-2 text-xs text-ink-500 dark:text-ink-400">
                           <Clock className="h-3.5 w-3.5" />
                           {m.start_time.slice(0, 5)} · {m.duration_minutes}m
                           {m.location && <span className="hidden sm:inline">· {m.location}</span>}
@@ -311,7 +311,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
 
       {/* Recent tasks + Project progress */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <CardHeader>
             <div>
               <CardTitle>Recent Tasks</CardTitle>
@@ -319,21 +319,21 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('tasks')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
               View all <ArrowUpRight className="h-4 w-4" />
             </button>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="divide-y divide-ink-100">
+            <div className="divide-y divide-ink-100 dark:divide-white/[0.06]">
               {recentTasks.map((t) => {
                 const due = dueLabel(t.due_date);
                 return (
                   <div key={t.id} className="flex items-center gap-3 py-3">
                     <Avatar name={t.assignee?.name ?? 'Unassigned'} src={t.assignee?.avatar_url} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink-900">{t.title}</p>
-                      <p className="truncate text-xs text-ink-500">{t.project?.name ?? 'No project'}</p>
+                      <p className="truncate text-sm font-medium text-ink-900 dark:text-white">{t.title}</p>
+                      <p className="truncate text-xs text-ink-500 dark:text-ink-400">{t.project?.name ?? 'No project'}</p>
                     </div>
                     <div className="hidden items-center gap-2 sm:flex">
                       <PriorityBadge priority={t.priority} />
@@ -342,7 +342,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                     <span
                       className={cn(
                         'hidden w-16 text-right text-xs font-medium md:block',
-                        due.tone === 'overdue' ? 'text-danger-600' : due.tone === 'soon' ? 'text-warning-600' : 'text-ink-500',
+                        due.tone === 'overdue' ? 'text-danger-600 dark:text-danger-400' : due.tone === 'soon' ? 'text-warning-600 dark:text-warning-400' : 'text-ink-500 dark:text-ink-400',
                       )}
                     >
                       {due.label}
@@ -354,7 +354,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
           <CardHeader>
             <div>
               <CardTitle>Project Progress</CardTitle>
@@ -362,23 +362,23 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('projects')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
               View all <ArrowUpRight className="h-4 w-4" />
             </button>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="divide-y divide-ink-100">
+            <div className="divide-y divide-ink-100 dark:divide-white/[0.06]">
               {projects.slice(0, 5).map((p) => (
                 <div key={p.id} className="py-3.5">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-600">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-600 dark:bg-white/5 dark:text-ink-300">
                         <Briefcase className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-ink-900">{p.name}</p>
-                        <p className="truncate text-xs text-ink-500">{p.department?.name ?? '—'}</p>
+                        <p className="truncate text-sm font-semibold text-ink-900 dark:text-white">{p.name}</p>
+                        <p className="truncate text-xs text-ink-500 dark:text-ink-400">{p.department?.name ?? '—'}</p>
                       </div>
                     </div>
                     <ProjectStatusBadge status={p.status} />
@@ -387,7 +387,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                 </div>
               ))}
               {projects.length === 0 && (
-                <div className="flex h-32 items-center justify-center text-sm text-ink-400">No projects yet</div>
+                <div className="flex h-32 items-center justify-center text-sm text-ink-400 dark:text-ink-500">No projects yet</div>
               )}
             </div>
           </CardContent>
