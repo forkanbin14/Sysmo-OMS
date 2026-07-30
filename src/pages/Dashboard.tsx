@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Users,
   FolderKanban,
@@ -10,6 +10,8 @@ import {
   CircleDollarSign,
   Sparkles,
   TrendingUp,
+  TrendingDown,
+  ChevronRight,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
 import type { PageKey } from '@/components/layout/Sidebar';
@@ -24,7 +26,6 @@ import {
   TaskStatusBadge,
   PriorityBadge,
 } from '@/components/ui/StatusBadges';
-import { ProgressBar as Bar } from '@/components/shared/ProgressBar';
 import { cn, formatCurrency, formatDateShort, dueLabel } from '@/lib/utils';
 
 interface DashboardProps {
@@ -92,11 +93,11 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
   );
 
   return (
-    <div className="space-y-6">
-      {/* AI insight banner — Stripe-style */}
-      <div className="relative overflow-hidden rounded-2xl border border-brand-500/15 bg-gradient-to-r from-brand-600/10 via-brand-600/[0.04] to-transparent p-5 animate-fade-in">
+    <div className="space-y-5 lg:space-y-6">
+      {/* AI insight banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-brand-500/15 bg-gradient-to-r from-brand-600/10 via-brand-600/[0.04] to-transparent p-4 sm:p-5 animate-fade-in">
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-500/10 blur-3xl animate-glow-pulse" />
-        <div className="relative flex items-start gap-4">
+        <div className="relative flex items-start gap-3 sm:gap-4">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-accent-500 shadow-brand-glow">
             <Sparkles className="h-4.5 w-4.5 text-white" />
           </span>
@@ -117,15 +118,15 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 stagger">
-        <StatCard label="Active Employees" value={stats.activeEmployees} icon={Users} tone="brand" hint={stats.onLeave > 0 ? `${stats.onLeave} on leave` : 'All hands on deck'} loading={loading} delay={0} />
-        <StatCard label="Active Projects" value={stats.activeProjects} icon={FolderKanban} tone="accent" trend={{ value: '12%', up: true }} hint="vs last quarter" loading={loading} delay={60} />
-        <StatCard label="Open Tasks" value={stats.openTasks} icon={CheckSquare} tone="warning" hint={`${stats.doneTasks} completed`} loading={loading} delay={120} />
-        <StatCard label="Present Today" value={stats.presentToday} icon={CalendarCheck} tone="success" trend={{ value: '94%', up: true }} hint="attendance rate" loading={loading} delay={180} />
+      {/* Stat cards — 2-col on mobile, 4-col on desktop */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4 stagger">
+        <StatCard label="Employees" value={stats.activeEmployees} icon={Users} tone="brand" hint={stats.onLeave > 0 ? `${stats.onLeave} on leave` : 'All hands on deck'} loading={loading} delay={0} />
+        <StatCard label="Projects" value={stats.activeProjects} icon={FolderKanban} tone="accent" trend={{ value: '12%', up: true }} hint="vs last quarter" loading={loading} delay={60} />
+        <StatCard label="Open Tasks" value={stats.openTasks} icon={CheckSquare} tone="warning" hint={`${stats.doneTasks} done`} loading={loading} delay={120} />
+        <StatCard label="Present Today" value={stats.presentToday} icon={CalendarCheck} tone="success" trend={{ value: '94%', up: true }} hint="attendance" loading={loading} delay={180} />
       </div>
 
-      {/* Charts row */}
+      {/* Charts row — stacked on mobile, 3-col on desktop */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Task completion donut */}
         <Card className="lg:col-span-1">
@@ -136,8 +137,8 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center gap-6 pt-1">
-              <ProgressRing value={stats.completionRate} size={140} strokeWidth={12} label={`${stats.completionRate}%`} />
+            <div className="flex flex-col items-center gap-5 sm:gap-6 pt-1">
+              <ProgressRing value={stats.completionRate} size={120} strokeWidth={11} label={`${stats.completionRate}%`} className="sm:!scale-100" />
               <div className="grid w-full grid-cols-2 gap-2.5">
                 {([
                   { key: 'done', label: 'Done', tone: 'bg-success-500', value: taskDist.done },
@@ -146,7 +147,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                   { key: 'todo', label: 'To Do', tone: 'bg-ink-400 dark:bg-ink-600', value: taskDist.todo },
                 ] as const).map((g) => (
                   <div key={g.key} className="flex items-center gap-2">
-                    <span className={cn('h-2 w-2 rounded-full', g.tone)} />
+                    <span className={cn('h-2 w-2 shrink-0 rounded-full', g.tone)} />
                     <span className="text-[13px] text-ink-600 dark:text-ink-400">{g.label}</span>
                     <span className="ml-auto text-[13px] font-semibold tabular text-ink-900 dark:text-white">{g.value}</span>
                   </div>
@@ -171,18 +172,18 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           </CardHeader>
           <CardContent>
             {attendanceChart.length === 0 ? (
-              <div className="flex h-48 items-center justify-center text-[13px] text-ink-400 dark:text-ink-500">No attendance records yet</div>
+              <div className="flex h-40 items-center justify-center text-[13px] text-ink-400 dark:text-ink-500">No attendance records yet</div>
             ) : (
-              <div className="flex h-52 items-end justify-between gap-3 pt-4">
+              <div className="flex h-44 items-end justify-between gap-2 pt-4 sm:h-52 sm:gap-3">
                 {attendanceChart.map(([date, v]) => {
                   const total = v.present + v.late + v.remote + v.absent;
                   const heightPct = (total / maxAttendance) * 100;
                   return (
                     <div key={date} className="group flex flex-1 flex-col items-center gap-2">
-                      <div className="relative flex w-full max-w-[44px] flex-col justify-end" style={{ height: '160px' }}>
+                      <div className="relative flex w-full max-w-[40px] flex-col justify-end sm:max-w-[44px]" style={{ height: '140px' }}>
                         <div
                           className="flex w-full flex-col-reverse overflow-hidden rounded-lg transition-all duration-500 ease-out-quart group-hover:scale-[1.04] group-hover:shadow-brand-glow"
-                          style={{ height: `${heightPct}%` }}
+                          style={{ height: `calc(140px * ${heightPct / 100})` }}
                         >
                           {v.present > 0 && <div className="bg-success-500" style={{ flexGrow: v.present }} />}
                           {v.late > 0 && <div className="bg-warning-500" style={{ flexGrow: v.late }} />}
@@ -202,35 +203,35 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
         </Card>
       </div>
 
-      {/* Budget + Department headcount */}
+      {/* Budget + Meetings — stacked on mobile */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <div>
               <CardTitle>Department Budget</CardTitle>
-              <CardDescription>Combined annual allocation</CardDescription>
+              <CardDescription>Annual allocation</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-success-500/10 text-success-400 ring-1 ring-success-500/20">
-                <CircleDollarSign className="h-7 w-7" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success-500/10 text-success-400 ring-1 ring-success-500/20 sm:h-14 sm:w-14">
+                <CircleDollarSign className="h-6 w-6 sm:h-7 sm:w-7" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-display text-stat tabular text-ink-900 dark:text-white">
                   {formatCurrency(stats.totalBudget)}
                 </p>
-                <p className="mt-0.5 text-[13px] text-ink-500 dark:text-ink-400">across {departments.length} departments</p>
+                <p className="mt-0.5 truncate text-[13px] text-ink-500 dark:text-ink-400">{departments.length} departments</p>
               </div>
             </div>
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3 sm:mt-5">
               {deptHeadcount.slice(0, 4).map((d) => {
                 const budgetPct = stats.totalBudget > 0 ? ((d.budget ?? 0) / stats.totalBudget) * 100 : 0;
                 return (
                   <div key={d.id}>
                     <div className="mb-1.5 flex items-center justify-between text-[13px]">
-                      <span className="font-medium text-ink-700 dark:text-ink-200">{d.name}</span>
-                      <span className="tabular text-ink-500 dark:text-ink-400">{formatCurrency(d.budget)}</span>
+                      <span className="truncate font-medium text-ink-700 dark:text-ink-200">{d.name}</span>
+                      <span className="ml-2 shrink-0 tabular text-ink-500 dark:text-ink-400">{formatCurrency(d.budget)}</span>
                     </div>
                     <ProgressBar value={budgetPct} barClassName="bg-gradient-to-r from-brand-400 to-accent-400" />
                   </div>
@@ -249,7 +250,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
             </div>
             <button
               onClick={() => onNavigate('meetings')}
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
+              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
             >
               View all <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
@@ -265,11 +266,11 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                   const dateNum = meetingDate.getDate();
                   const isToday = m.meeting_date === new Date().toISOString().slice(0, 10);
                   return (
-                    <div key={m.id} className="flex items-center gap-4 py-3 transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg">
+                    <div key={m.id} className="flex items-center gap-3 py-3 transition-colors hover:bg-ink-50/50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg sm:gap-4">
                       <div
                         className={cn(
                           'flex h-11 w-11 flex-col items-center justify-center rounded-xl text-center shrink-0',
-                          isToday ? 'bg-brand-600 text-white shadow-brand-glow' : 'bg-white/[0.04] text-ink-300 dark:bg-white/[0.04] dark:text-ink-400 ring-1 ring-inset ring-white/[0.06]',
+                          isToday ? 'bg-brand-600 text-white shadow-brand-glow' : 'bg-white/[0.04] text-ink-300 ring-1 ring-inset ring-white/[0.06] dark:text-ink-400',
                         )}
                       >
                         <span className="text-[10px] font-semibold uppercase">{day}</span>
@@ -299,11 +300,11 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           <CardHeader>
             <div>
               <CardTitle>Recent Tasks</CardTitle>
-              <CardDescription>Latest created work items</CardDescription>
+              <CardDescription>Latest work items</CardDescription>
             </div>
             <button
               onClick={() => onNavigate('tasks')}
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
+              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
             >
               View all <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
@@ -342,11 +343,11 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
           <CardHeader>
             <div>
               <CardTitle>Project Progress</CardTitle>
-              <CardDescription>Active and planning initiatives</CardDescription>
+              <CardDescription>Active initiatives</CardDescription>
             </div>
             <button
               onClick={() => onNavigate('projects')}
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
+              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-brand-500 transition-colors hover:text-brand-400 dark:text-brand-400 dark:hover:text-brand-300"
             >
               View all <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
@@ -357,7 +358,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                 <div key={p.id} className="py-3">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-ink-400 ring-1 ring-inset ring-white/[0.06]">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-ink-400 ring-1 ring-inset ring-white/[0.06]">
                         <Briefcase className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
@@ -367,7 +368,7 @@ export function Dashboard({ data, onNavigate }: DashboardProps) {
                     </div>
                     <ProjectStatusBadge status={p.status} />
                   </div>
-                  <Bar value={p.progress} showValue barClassName={p.progress >= 75 ? 'bg-success-500' : p.progress >= 40 ? 'bg-brand-500' : 'bg-warning-500'} />
+                  <ProgressBar value={p.progress} showValue barClassName={p.progress >= 75 ? 'bg-success-500' : p.progress >= 40 ? 'bg-brand-500' : 'bg-warning-500'} />
                 </div>
               ))}
               {activeProjectsList.length === 0 && (

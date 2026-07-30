@@ -56,19 +56,19 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
   return (
     <header className="sticky top-0 z-30 border-b border-white/[0.04] bg-ink-925/80 backdrop-blur-2xl">
       <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        {/* Mobile menu toggle */}
+        {/* Mobile menu toggle — 44px touch target */}
         <button
           onClick={onOpenMobile}
-          className="rounded-lg p-2 text-ink-400 transition-colors hover:bg-white/5 hover:text-white lg:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-400 transition-colors hover:bg-white/5 active:scale-95 hover:text-white lg:hidden"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Mobile search icon */}
+        {/* Mobile search icon — 44px touch target */}
         <button
           onClick={onSearch}
-          className="rounded-lg p-2 text-ink-400 transition-colors hover:bg-white/5 hover:text-white md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-400 transition-colors hover:bg-white/5 active:scale-95 hover:text-white md:hidden"
           aria-label="Search"
         >
           <Search className="h-5 w-5" />
@@ -109,7 +109,7 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
         <div ref={notifRef} className="relative">
           <button
             onClick={() => setNotifOpen((o) => !o)}
-            className="relative rounded-lg p-2 text-ink-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="relative flex h-11 w-11 items-center justify-center rounded-xl text-ink-400 transition-colors hover:bg-white/5 active:scale-95 hover:text-white"
             aria-label="Notifications"
           >
             <Bell className="h-[18px] w-[18px]" />

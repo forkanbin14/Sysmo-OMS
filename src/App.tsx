@@ -8,6 +8,7 @@ import { useAppData } from '@/hooks/useAppData';
 import { SearchPalette } from '@/components/search/SearchPalette';
 import { ProfilePanel } from '@/components/layout/ProfilePanel';
 import { AIAssistant } from '@/components/ai/AIAssistant';
+import { BottomNav, MoreSheet } from '@/components/layout/BottomNav';
 import { Dashboard } from '@/pages/Dashboard';
 import { Employees } from '@/pages/Employees';
 import { Departments } from '@/pages/Departments';
@@ -36,6 +37,7 @@ function AppContent() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const data = useAppData();
 
   function navigate(p: PageKey) {
@@ -88,7 +90,7 @@ function AppContent() {
           onOpenAI={() => setAiOpen(true)}
         />
 
-        <main id="main-scroll" className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main-scroll" className="mx-auto max-w-[1400px] px-4 py-6 pb-28 sm:px-6 lg:px-8 lg:pb-8">
           {/* Global error banner */}
           {data.error && !data.loading && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-danger-500/20 bg-danger-500/10 px-4 py-3 text-sm text-danger-300 animate-fade-in">
@@ -129,6 +131,22 @@ function AppContent() {
       />
 
       <AIAssistant open={aiOpen} onClose={() => setAiOpen(false)} />
+
+      <BottomNav
+        current={page}
+        onNavigate={navigate}
+        onOpenMore={() => setMoreOpen(true)}
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenAI={() => setAiOpen(true)}
+      />
+      <MoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        current={page}
+        onNavigate={navigate}
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenAI={() => setAiOpen(true)}
+      />
     </div>
   );
 }
