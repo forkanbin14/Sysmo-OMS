@@ -78,7 +78,7 @@ function AppContent() {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <div className="lg:pl-72">
+      <div className="lg:pl-[260px]">
         <Topbar
           title={meta.title}
           subtitle={meta.subtitle}
