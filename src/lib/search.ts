@@ -19,7 +19,7 @@ export interface SearchResult {
   avatar?: string | null;
   badge?: { label: string; tone: string };
   /** page to navigate to when selected */
-  page: 'dashboard' | 'employees' | 'departments' | 'projects' | 'tasks' | 'attendance' | 'meetings';
+  page: 'dashboard' | 'employees' | 'departments' | 'projects' | 'tasks' | 'attendance' | 'meetings' | 'feed' | 'messenger' | 'profile' | 'admin' | 'settings';
 }
 
 /** Normalize text for matching: lowercase, collapse whitespace, strip diacritics. */
@@ -180,6 +180,9 @@ export function searchAll(query: string, data: AppData): SearchResult[] {
 /** Page shortcuts — always available as quick-jump results. */
 export const pageShortcuts: SearchResult[] = [
   { id: 'page-dashboard', type: 'page', title: 'Dashboard', subtitle: 'Overview & insights', score: 0, page: 'dashboard' },
+  { id: 'page-feed', type: 'page', title: 'Feed', subtitle: 'Team updates & posts', score: 0, page: 'feed' },
+  { id: 'page-messenger', type: 'page', title: 'Messenger', subtitle: 'Direct messages', score: 0, page: 'messenger' },
+  { id: 'page-profile', type: 'page', title: 'Profiles', subtitle: 'Rich employee profiles', score: 0, page: 'profile' },
   { id: 'page-employees', type: 'page', title: 'Employees', subtitle: 'Manage your team', score: 0, page: 'employees' },
   { id: 'page-departments', type: 'page', title: 'Departments', subtitle: 'Org structure', score: 0, page: 'departments' },
   { id: 'page-projects', type: 'page', title: 'Projects', subtitle: 'Initiatives & timelines', score: 0, page: 'projects' },

@@ -11,6 +11,9 @@ import {
   X,
   Sparkles,
   Settings,
+  Newspaper,
+  MessageSquare,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +26,10 @@ export type PageKey =
   | 'attendance'
   | 'meetings'
   | 'admin'
-  | 'settings';
+  | 'settings'
+  | 'profile'
+  | 'feed'
+  | 'messenger';
 
 interface NavItem {
   key: PageKey;
@@ -34,12 +40,18 @@ interface NavItem {
 
 const nav: NavItem[] = [
   { key: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
-  { key: 'employees',   label: 'Employees',   icon: Users },
-  { key: 'departments', label: 'Departments', icon: Building2 },
-  { key: 'projects',    label: 'Projects',    icon: FolderKanban },
-  { key: 'tasks',       label: 'Tasks',       icon: CheckSquare },
-  { key: 'attendance',  label: 'Attendance',  icon: CalendarCheck },
-  { key: 'meetings',    label: 'Meetings',    icon: CalendarClock },
+  { key: 'feed',        label: 'Feed',         icon: Newspaper },
+  { key: 'messenger',   label: 'Messenger',    icon: MessageSquare },
+  { key: 'employees',   label: 'Employees',    icon: Users },
+  { key: 'departments', label: 'Departments',  icon: Building2 },
+  { key: 'projects',    label: 'Projects',     icon: FolderKanban },
+  { key: 'tasks',       label: 'Tasks',        icon: CheckSquare },
+  { key: 'attendance',  label: 'Attendance',   icon: CalendarCheck },
+  { key: 'meetings',    label: 'Meetings',     icon: CalendarClock },
+];
+
+const socialNav: NavItem[] = [
+  { key: 'profile', label: 'Profile', icon: UserCircle },
 ];
 
 const adminNav: NavItem[] = [
@@ -127,6 +139,38 @@ export function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }: Side
               </button>
             );
           })}
+
+          {/* Social section */}
+          <div className="pt-3">
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-600">
+              Social
+            </p>
+            {socialNav.map((item) => {
+              const active = current === item.key;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => onNavigate(item.key)}
+                  className={cn(
+                    'group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ease-out-quart',
+                    active ? 'bg-white/[0.06] text-white' : 'text-ink-400 hover:bg-white/[0.03] hover:text-white',
+                  )}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1/2 h-4 -translate-y-1/2 w-0.5 rounded-r-full bg-accent-400" />
+                  )}
+                  <Icon
+                    className={cn(
+                      'h-4 w-4 shrink-0 transition-colors',
+                      active ? 'text-accent-400' : 'text-ink-500 group-hover:text-ink-300',
+                    )}
+                  />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Admin section */}
           <div className="pt-5">

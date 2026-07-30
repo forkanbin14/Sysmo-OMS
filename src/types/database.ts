@@ -119,3 +119,83 @@ export interface AuditLogEntry {
   description: string | null;
   created_at: string;
 }
+
+/* ── Social platform ── */
+
+export interface Profile {
+  id: string;
+  employee_id: string;
+  cover_url: string | null;
+  bio: string | null;
+  location: string | null;
+  timezone: string | null;
+  website: string | null;
+  linkedin_url: string | null;
+  github_url: string | null;
+  skills: string[];
+  resume_url: string | null;
+  role: string;
+  updated_at: string;
+  // joined
+  employee?: Employee | null;
+}
+
+export type ProfileInput = Omit<Profile, 'id' | 'employee_id' | 'updated_at' | 'employee'>;
+
+export interface PostLike {
+  id: string;
+  post_id: string;
+  employee_id: string;
+  created_at: string;
+  // joined
+  employee?: Employee | null;
+}
+
+export interface PostComment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  // joined
+  author?: Employee | null;
+}
+
+export interface Post {
+  id: string;
+  author_id: string;
+  content: string;
+  image_url: string | null;
+  visibility: 'public' | 'internal';
+  created_at: string;
+  // joined
+  author?: Employee | null;
+  likes?: PostLike[];
+  comments?: PostComment[];
+}
+
+export type PostInput = Pick<Post, 'author_id' | 'content' | 'image_url' | 'visibility'>;
+
+export interface ConversationMember {
+  id: string;
+  conversation_id: string;
+  employee_id: string;
+  last_read_at: string;
+  employee?: Employee | null;
+}
+
+export interface Conversation {
+  id: string;
+  created_at: string;
+  members?: ConversationMember[];
+  messages?: Message[];
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string | null;
+  content: string;
+  created_at: string;
+  sender?: Employee | null;
+}

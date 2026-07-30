@@ -18,6 +18,9 @@ import { Attendance } from '@/pages/Attendance';
 import { Meetings } from '@/pages/Meetings';
 import { Admin } from '@/pages/Admin';
 import { Settings } from '@/pages/Settings';
+import { ProfilePage } from '@/pages/Profile';
+import { FeedPage } from '@/pages/Feed';
+import { MessengerPage } from '@/pages/Messenger';
 
 const pageMeta: Record<PageKey, { title: string; subtitle: string }> = {
   dashboard:   { title: 'Dashboard',   subtitle: 'Your office at a glance' },
@@ -28,6 +31,9 @@ const pageMeta: Record<PageKey, { title: string; subtitle: string }> = {
   attendance:  { title: 'Attendance',  subtitle: 'Daily check-ins and presence' },
   meetings:    { title: 'Meetings',    subtitle: 'Scheduled team sessions' },
   admin:       { title: 'Admin Panel', subtitle: 'Manage roles, transactions & system controls' },
+  feed:        { title: 'Feed',        subtitle: 'Share updates with your team' },
+  messenger:   { title: 'Messenger',   subtitle: 'Direct messages with teammates' },
+  profile:     { title: 'Profile',     subtitle: 'Rich employee profiles' },
   settings:    { title: 'Settings',    subtitle: 'Manage your account, preferences and workspace' },
 };
 
@@ -112,6 +118,9 @@ function AppContent() {
             {page === 'meetings' && <Meetings data={data} />}
             {page === 'admin' && <Admin data={data} onNavigate={navigate} />}
             {page === 'settings' && <Settings />}
+            {page === 'profile' && <ProfilePage data={data} />}
+            {page === 'feed' && <FeedPage data={data} />}
+            {page === 'messenger' && <MessengerPage data={data} />}
           </div>
         </main>
       </div>
