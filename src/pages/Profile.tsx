@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Camera,
   Mail,
   Phone,
   MapPin,
@@ -17,9 +16,11 @@ import {
   Check,
   Sparkles,
   TrendingUp,
+  Users,
+  ChevronDown,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
-import type { Profile, ProfileInput } from '@/types/database';
+import type { ProfileInput } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -46,6 +47,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
   const [saving, setSaving] = useState(false);
   const [skillInput, setSkillInput] = useState('');
   const [search, setSearch] = useState('');
+  const [listOpen, setListOpen] = useState(false);
 
   const selectedEmployee = employees.find((e) => e.id === selectedEmpId) ?? employees[0];
   const selectedProfile = profiles.find((p) => p.employee_id === selectedEmployee?.id);
@@ -72,6 +74,11 @@ export function ProfilePage({ data }: ProfilePageProps) {
     !search || e.name.toLowerCase().includes(search.toLowerCase()) ||
     (e.position ?? '').toLowerCase().includes(search.toLowerCase()),
   );
+
+  function selectEmployee(id: string) {
+    setSelectedEmpId(id);
+    setListOpen(false);
+  }
 
   function openEdit() {
     if (!selectedProfile) return;
@@ -138,9 +145,9 @@ export function ProfilePage({ data }: ProfilePageProps) {
         description="Rich employee profiles with skills, bio and more"
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]">
-        {/* Employee list */}
-        <Card className="h-fit lg:sticky lg:top-20 dark:bg-ink-850/60 dark:border-white/[0.06]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
+        {/* ── Desktop sidebar: employee list ── */}
+        <Card className="hidden h-fit lg:block lg:sticky lg:top-20 dark:bg-ink-850/60 dark:border-white/[0.06]">
           <div className="border-b border-ink-100 p-3 dark:border-white/[0.06]">
             <Input
               placeholder="Search people…"
@@ -154,7 +161,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
               return (
                 <button
                   key={emp.id}
-                  onClick={() => setSelectedEmpId(emp.id)}
+                  onClick={() => selectEmployee(emp.id)}
                   className={cn(
                     'flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors',
                     active ? 'bg-brand-500/10 ring-1 ring-inset ring-brand-500/20' : 'hover:bg-ink-50 dark:hover:bg-white/[0.03]',
@@ -172,11 +179,88 @@ export function ProfilePage({ data }: ProfilePageProps) {
           </div>
         </Card>
 
+        {/* ── Mobile: horizontal avatar strip + collapsible list ── */}
+        <div className="lg:hidden">
+          {/* Avatar carousel */}
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
+            {employees.map((emp) => {
+              const active = emp.id === selectedEmployee.id;
+              return (
+                <button
+                  key={emp.id}
+                  onClick={() => selectEmployee(emp.id)}
+                  className="group flex flex-col items-center gap-1.5 shrink-0"
+                >
+                  <span className={cn(
+                    'rounded-full p-0.5 transition-all',
+                    active ? 'bg-brand-500 ring-2 ring-brand-500/30' : 'ring-1 ring-ink-200 dark:ring-white/[0.08]',
+                  )}>
+                    <Avatar name={emp.name} src={emp.avatar_url} size="md" />
+                  </span>
+                  <span className={cn(
+                    'max-w-[64px] truncate text-[10px] font-medium',
+                    active ? 'text-brand-600 dark:text-brand-400' : 'text-ink-500 dark:text-ink-400',
+                  )}>
+                    {emp.name.split(' ')[0]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Expandable full list with search */}
+          <button
+            onClick={() => setListOpen((v) => !v)}
+            className="mt-1 flex w-full items-center justify-between rounded-xl border border-ink-200 px-3 py-2.5 text-[13px] font-medium text-ink-600 transition-colors hover:bg-ink-50 dark:border-white/[0.08] dark:text-ink-300 dark:hover:bg-white/[0.03]"
+          >
+            <span className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-ink-400" />
+              {filteredEmployees.length} people
+            </span>
+            <ChevronDown className={cn('h-4 w-4 text-ink-400 transition-transform', listOpen && 'rotate-180')} />
+          </button>
+
+          {listOpen && (
+            <div className="mt-2 rounded-xl border border-ink-200 dark:border-white/[0.08]">
+              <div className="border-b border-ink-100 p-2 dark:border-white/[0.06]">
+                <Input
+                  placeholder="Search people…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="max-h-64 space-y-0.5 overflow-y-auto p-1.5">
+                {filteredEmployees.map((emp) => {
+                  const active = emp.id === selectedEmployee.id;
+                  return (
+                    <button
+                      key={emp.id}
+                      onClick={() => selectEmployee(emp.id)}
+                      className={cn(
+                        'flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors',
+                        active ? 'bg-brand-500/10' : 'hover:bg-ink-50 dark:hover:bg-white/[0.03]',
+                      )}
+                    >
+                      <Avatar name={emp.name} src={emp.avatar_url} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-ink-900 dark:text-white">{emp.name}</p>
+                        <p className="truncate text-xs text-ink-500 dark:text-ink-400">{emp.position}</p>
+                      </div>
+                      {active && <div className="h-2 w-2 shrink-0 rounded-full bg-brand-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Profile detail */}
         <div className="space-y-4">
           {/* Cover + avatar */}
           <Card className="overflow-hidden p-0 dark:bg-ink-850/60 dark:border-white/[0.06]">
-            <div className="relative h-40 sm:h-52">
+            <div className="relative h-32 sm:h-44 lg:h-52">
               {selectedProfile?.cover_url ? (
                 <img
                   src={selectedProfile.cover_url}
@@ -187,27 +271,27 @@ export function ProfilePage({ data }: ProfilePageProps) {
               ) : (
                 <div className="h-full w-full bg-gradient-to-br from-brand-600 via-brand-700 to-accent-600" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               <button
                 onClick={openEdit}
-                className="absolute right-4 top-4 flex h-9 items-center gap-1.5 rounded-xl bg-white/20 px-3 text-[13px] font-medium text-white backdrop-blur-md transition-colors hover:bg-white/30"
+                className="absolute right-3 top-3 flex h-9 items-center gap-1.5 rounded-xl bg-white/20 px-3 text-[13px] font-medium text-white backdrop-blur-md transition-colors hover:bg-white/30 active:scale-95 sm:right-4 sm:top-4"
               >
                 <Pencil className="h-3.5 w-3.5" /> Edit
               </button>
             </div>
 
-            <div className="px-5 pb-5">
-              <div className="-mt-12 flex flex-col items-start gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+            <div className="px-4 pb-5 sm:px-5">
+              <div className="-mt-10 flex flex-col items-start gap-3 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
                 <div className="relative">
                   <Avatar
                     name={selectedEmployee.name}
                     src={selectedEmployee.avatar_url}
                     size="xl"
                     ring
-                    className="!h-24 !w-24 !text-2xl ring-4 ring-white shadow-float dark:ring-ink-850 sm:!h-28 sm:!w-28"
+                    className="!h-20 !w-20 !text-xl ring-4 ring-white shadow-float dark:ring-ink-850 sm:!h-28 sm:!w-28 sm:!text-2xl"
                   />
-                  <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-success-500 ring-2 ring-white dark:ring-ink-850">
-                    <span className="h-2.5 w-2.5 rounded-full bg-white" />
+                  <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-success-500 ring-2 ring-white dark:ring-ink-850 sm:h-7 sm:w-7">
+                    <span className="h-2 w-2 rounded-full bg-white sm:h-2.5 sm:w-2.5" />
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:pb-2">
@@ -225,14 +309,14 @@ export function ProfilePage({ data }: ProfilePageProps) {
               </div>
 
               <div className="mt-4">
-                <h2 className="font-display text-xl font-bold text-ink-900 dark:text-white sm:text-2xl">
+                <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white sm:text-2xl">
                   {selectedEmployee.name}
                 </h2>
-                <p className="mt-0.5 text-[15px] font-medium text-brand-600 dark:text-brand-400">
+                <p className="mt-0.5 text-sm font-medium text-brand-600 dark:text-brand-400 sm:text-[15px]">
                   {selectedEmployee.position ?? 'No position set'}
                 </p>
                 {selectedProfile?.bio && (
-                  <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-ink-600 dark:text-ink-300">
+                  <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-ink-600 dark:text-ink-300 sm:text-[14px]">
                     {selectedProfile.bio}
                   </p>
                 )}
@@ -244,115 +328,116 @@ export function ProfilePage({ data }: ProfilePageProps) {
                 {selectedEmployee.phone && <ContactChip icon={Phone} text={selectedEmployee.phone} />}
                 {selectedProfile?.location && <ContactChip icon={MapPin} text={selectedProfile.location} />}
                 {selectedProfile?.timezone && <ContactChip icon={Globe} text={selectedProfile.timezone} />}
-                {selectedProfile?.website && <ContactChip icon={Globe} text={selectedProfile.website} link />}
+                {selectedProfile?.website && <ContactChip icon={Globe} text="Website" link />}
                 {selectedProfile?.linkedin_url && <ContactChip icon={Linkedin} text="LinkedIn" link />}
                 {selectedProfile?.github_url && <ContactChip icon={Github} text="GitHub" link />}
               </div>
             </div>
           </Card>
 
-          {/* Stats + completion */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Stats — 1 col mobile, 3 col sm+ */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
               <CardContent className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
-                  <Briefcase className="h-5 w-5" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 sm:h-11 sm:w-11">
+                  <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
-                <div>
-                  <p className="font-display text-xl font-bold text-ink-900 dark:text-white">{empProjects.length}</p>
-                  <p className="text-xs text-ink-500 dark:text-ink-400">Projects involved</p>
+                <div className="min-w-0">
+                  <p className="font-display text-lg font-bold text-ink-900 dark:text-white sm:text-xl">{empProjects.length}</p>
+                  <p className="text-xs text-ink-500 dark:text-ink-400">Projects</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
               <CardContent className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-500/10 text-accent-600 dark:text-accent-400">
-                  <TrendingUp className="h-5 w-5" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500/10 text-accent-600 dark:text-accent-400 sm:h-11 sm:w-11">
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
-                <div>
-                  <p className="font-display text-xl font-bold text-ink-900 dark:text-white">{completionRate}%</p>
+                <div className="min-w-0">
+                  <p className="font-display text-lg font-bold text-ink-900 dark:text-white sm:text-xl">{completionRate}%</p>
                   <p className="text-xs text-ink-500 dark:text-ink-400">Task completion</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
               <CardContent className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-success-500/10 text-success-600 dark:text-success-400">
-                  <Building2 className="h-5 w-5" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success-500/10 text-success-600 dark:text-success-400 sm:h-11 sm:w-11">
+                  <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
-                <div>
-                  <p className="font-display text-sm font-bold text-ink-900 dark:text-white">{dept?.name ?? 'Unassigned'}</p>
+                <div className="min-w-0">
+                  <p className="truncate font-display text-sm font-bold text-ink-900 dark:text-white">{dept?.name ?? 'Unassigned'}</p>
                   <p className="text-xs text-ink-500 dark:text-ink-400">Department</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Skills */}
-          <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
-            <CardHeader>
-              <div>
-                <CardTitle>Skill Matrix</CardTitle>
-                <CardDescription>Expertise and technologies</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {selectedProfile?.skills && selectedProfile.skills.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {selectedProfile.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-ink-100 px-3 py-1.5 text-[13px] font-medium text-ink-700 ring-1 ring-ink-200 dark:bg-white/[0.05] dark:text-ink-200 dark:ring-white/[0.08]"
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-                      {skill}
-                    </span>
-                  ))}
+          {/* Skills + Experience — stacked mobile, could be 2-col on xl */}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
+              <CardHeader>
+                <div>
+                  <CardTitle>Skill Matrix</CardTitle>
+                  <CardDescription>Expertise and technologies</CardDescription>
                 </div>
-              ) : (
-                <p className="text-[13px] text-ink-400 dark:text-ink-500">No skills listed yet. Edit the profile to add some.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Experience / history */}
-          <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
-            <CardHeader>
-              <div>
-                <CardTitle>Experience</CardTitle>
-                <CardDescription>Role and tenure</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
-                  <Briefcase className="h-4 w-4" />
-                </span>
-                <div className="flex-1">
-                  <p className="text-[13px] font-semibold text-ink-900 dark:text-white">{selectedEmployee.position}</p>
-                  <p className="text-xs text-ink-500 dark:text-ink-400">{dept?.name ?? 'Unassigned'} · Since {formatDate(selectedEmployee.hire_date, { month: 'short', year: 'numeric' })}</p>
-                </div>
-                <span className="text-[13px] font-semibold tabular text-ink-700 dark:text-ink-200">{formatCurrency(selectedEmployee.salary)}</span>
-              </div>
-
-              {selectedProfile?.resume_url && (
-                <a
-                  href={selectedProfile.resume_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 rounded-xl border border-ink-200 p-3 transition-colors hover:bg-ink-50 dark:border-white/[0.08] dark:hover:bg-white/[0.03]"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-500/10 text-accent-600 dark:text-accent-400">
-                    <FileText className="h-4 w-4" />
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-semibold text-ink-900 dark:text-white">Resume / CV</p>
-                    <p className="text-xs text-ink-500 dark:text-ink-400">View document</p>
+              </CardHeader>
+              <CardContent>
+                {selectedProfile?.skills && selectedProfile.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProfile.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-ink-100 px-3 py-1.5 text-[13px] font-medium text-ink-700 ring-1 ring-ink-200 dark:bg-white/[0.05] dark:text-ink-200 dark:ring-white/[0.08]"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                        {skill}
+                      </span>
+                    ))}
                   </div>
-                </a>
-              )}
-            </CardContent>
-          </Card>
+                ) : (
+                  <p className="text-[13px] text-ink-400 dark:text-ink-500">No skills listed yet. Edit the profile to add some.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
+              <CardHeader>
+                <div>
+                  <CardTitle>Experience</CardTitle>
+                  <CardDescription>Role and tenure</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                    <Briefcase className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold text-ink-900 dark:text-white">{selectedEmployee.position}</p>
+                    <p className="text-xs text-ink-500 dark:text-ink-400">{dept?.name ?? 'Unassigned'} · Since {formatDate(selectedEmployee.hire_date, { month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <span className="shrink-0 text-[13px] font-semibold tabular text-ink-700 dark:text-ink-200">{formatCurrency(selectedEmployee.salary)}</span>
+                </div>
+
+                {selectedProfile?.resume_url && (
+                  <a
+                    href={selectedProfile.resume_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded-xl border border-ink-200 p-3 transition-colors hover:bg-ink-50 dark:border-white/[0.08] dark:hover:bg-white/[0.03]"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-500/10 text-accent-600 dark:text-accent-400">
+                      <FileText className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-ink-900 dark:text-white">Resume / CV</p>
+                      <p className="text-xs text-ink-500 dark:text-ink-400">View document</p>
+                    </div>
+                  </a>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Profile completion */}
           <div className="rounded-2xl bg-gradient-to-r from-brand-50 to-accent-50 p-4 ring-1 ring-brand-100 dark:from-brand-500/10 dark:to-accent-500/10 dark:ring-brand-500/20">
@@ -384,7 +469,6 @@ export function ProfilePage({ data }: ProfilePageProps) {
       >
         {form && (
           <div className="space-y-4">
-            {/* Cover URL */}
             <Field label="Cover photo URL" hint="A wide landscape image for your profile banner.">
               <Input
                 value={form.cover_url ?? ''}
@@ -393,7 +477,6 @@ export function ProfilePage({ data }: ProfilePageProps) {
               />
             </Field>
 
-            {/* Bio */}
             <Field label="Bio">
               <Textarea
                 rows={3}
@@ -427,7 +510,6 @@ export function ProfilePage({ data }: ProfilePageProps) {
               </Field>
             </div>
 
-            {/* Skills editor */}
             <Field label="Skills" hint="Press Enter or click Add to add a skill.">
               <div className="flex gap-2">
                 <Input
@@ -436,7 +518,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
                   placeholder="e.g. TypeScript"
                 />
-                <Button variant="secondary" onClick={addSkill} type="button">
+                <Button variant="secondary" onClick={addSkill} type="button" className="shrink-0">
                   <Plus className="h-4 w-4" /> Add
                 </Button>
               </div>
@@ -465,10 +547,10 @@ export function ProfilePage({ data }: ProfilePageProps) {
 
 function ContactChip({ icon: Icon, text, link }: { icon: typeof Mail; text: string; link?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200 dark:bg-white/5 dark:text-ink-300 dark:ring-white/[0.06]">
-      <Icon className="h-3.5 w-3.5 text-ink-400 dark:text-ink-500" />
-      {text}
-      {link && <span className="text-brand-500">↗</span>}
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600 ring-1 ring-ink-200 dark:bg-white/5 dark:text-ink-300 dark:ring-white/[0.06]">
+      <Icon className="h-3.5 w-3.5 shrink-0 text-ink-400 dark:text-ink-500" />
+      <span className="truncate">{text}</span>
+      {link && <span className="shrink-0 text-brand-500">↗</span>}
     </span>
   );
 }
