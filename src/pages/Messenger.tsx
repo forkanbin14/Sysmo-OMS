@@ -6,23 +6,34 @@ import {
   Plus,
   ArrowLeft,
   CheckCheck,
+  Phone,
+  Video,
+  Paperclip,
+  FileText,
+  Download,
+  X,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
 import type { Conversation } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useWebRTCCall } from '@/hooks/useWebRTCCall';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { ClickableAvatar, ClickableName } from '@/components/shared/ClickableUser';
+import { CallOverlay, type CallState, type CallType } from '@/components/messenger/CallOverlay';
 import { cn, formatTime, formatDate } from '@/lib/utils';
 
 interface MessengerPageProps {
   data: AppData;
+  initialTargetId?: string | null;
+  onViewProfile?: (empId: string) => void;
+  onClearTarget?: () => void;
 }
-
-const CURRENT_USER_ID = '22222222-2222-2222-2222-222222222201';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -34,19 +45,51 @@ function timeAgo(iso: string): string {
   return formatDate(iso);
 }
 
-export function MessengerPage({ data }: MessengerPageProps) {
+export function MessengerPage({ data, initialTargetId, onViewProfile, onClearTarget }: MessengerPageProps) {
   const { conversations, employees, refresh } = data;
   const toast = useToast();
+  const { user: currentUser } = useCurrentUser();
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState('');
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // Call state
+  const [callState, setCallState] = useState<CallState>('idle');
+  const [callType, setCallType] = useState<CallType>('voice');
+  const [callDuration, setCallDuration] = useState(0);
+  const [isIncoming, setIsIncoming] = useState(false);
+  const [incomingSignal, setIncomingSignal] = useState<import('@/types/database').CallSignal | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(true);
+
+  const currentUserId = currentUser?.id ?? '';
+
   const activeConv = conversations.find((c) => c.id === activeId);
-  const currentUser = employees.find((e) => e.id === CURRENT_USER_ID) ?? employees[0];
+  const otherMember = activeConv?.members?.find((m) => m.employee_id !== currentUserId)?.employee ?? null;
+
+  const {
+    startCall: rtcStartCall,
+    acceptCall: rtcAcceptCall,
+    handleSignal: rtcHandleSignal,
+    endCall: rtcEndCall,
+    rejectCall: rtcRejectCall,
+    toggleMute: rtcToggleMute,
+    toggleVideo: rtcToggleVideo,
+    localStream,
+    remoteStream,
+    callId,
+  } = useWebRTCCall({
+    currentUserId: currentUserId || null,
+    receiverId: otherMember?.id ?? null,
+    conversationId: activeConv?.id ?? null,
+    onSignalInsert: () => {},
+  });
 
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
@@ -57,22 +100,80 @@ export function MessengerPage({ data }: MessengerPageProps) {
   }, [conversations]);
 
   function getOtherMember(conv: Conversation) {
-    return conv.members?.find((m) => m.employee_id !== CURRENT_USER_ID)?.employee ?? null;
+    return conv.members?.find((m) => m.employee_id !== currentUserId)?.employee ?? null;
   }
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     if (activeConv) {
       setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     }
   }, [activeConv?.messages?.length, activeId]);
 
+  // Start conversation from initialTargetId (e.g., from profile "Message" button)
+  useEffect(() => {
+    if (initialTargetId && currentUser) {
+      const existing = conversations.find((c) =>
+        c.members?.some((m) => m.employee_id === initialTargetId) &&
+        c.members?.some((m) => m.employee_id === currentUserId) &&
+        (c.members?.length ?? 0) === 2,
+      );
+      if (existing) {
+        setActiveId(existing.id);
+        onClearTarget?.();
+      } else {
+        startConversationWith(initialTargetId);
+      }
+    }
+  }, [initialTargetId, conversations, currentUser]);
+
+  // Call duration timer
+  useEffect(() => {
+    if (callState !== 'connected') return;
+    const interval = setInterval(() => setCallDuration((d) => d + 1), 1000);
+    return () => clearInterval(interval);
+  }, [callState]);
+
+  // Listen for incoming call signals
+  useEffect(() => {
+    if (!currentUserId || !activeConv) return;
+    const channel = supabase
+      .channel(`call-signaling-${currentUserId}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'call_signaling', filter: `receiver_id=eq.${currentUserId}` },
+        (payload) => {
+          const signal = payload.new as import('@/types/database').CallSignal;
+          if (signal.type === 'call-start') {
+            setIsIncoming(true);
+            setIncomingSignal(signal);
+            setCallState('calling');
+            const ct = (signal.payload?.callType as CallType) ?? 'voice';
+            setCallType(ct);
+          } else if (signal.type === 'answer') {
+            setCallState('connected');
+            setCallDuration(0);
+            rtcHandleSignal(signal);
+          } else if (signal.type === 'ice-candidate') {
+            rtcHandleSignal(signal);
+          } else if (signal.type === 'call-end' || signal.type === 'call-rejected') {
+            setCallState(signal.type === 'call-rejected' ? 'rejected' : 'ended');
+            rtcEndCall();
+          }
+        },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUserId, activeConv, rtcHandleSignal, rtcEndCall]);
+
   async function sendMessage() {
     if (!message.trim() || !activeConv) return;
     setSending(true);
     const { error } = await supabase.from('messages').insert({
       conversation_id: activeConv.id,
-      sender_id: CURRENT_USER_ID,
+      sender_id: currentUserId,
       content: message.trim(),
+      message_type: 'text',
     });
     setSending(false);
     if (error) {
@@ -83,17 +184,45 @@ export function MessengerPage({ data }: MessengerPageProps) {
     refresh();
   }
 
-  async function startConversation() {
-    if (!selectedEmp) return;
+  async function uploadFile(file: File) {
+    if (!activeConv) return;
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `messages/${activeConv.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('chat-files').upload(path, file);
+    if (upErr) {
+      toast.error('File upload failed', upErr.message);
+      setUploading(false);
+      return;
+    }
+    const url = supabase.storage.from('chat-files').getPublicUrl(path).data.publicUrl;
+    const { error: msgErr } = await supabase.from('messages').insert({
+      conversation_id: activeConv.id,
+      sender_id: currentUserId,
+      content: file.name,
+      message_type: 'file',
+      file_url: url,
+      file_name: file.name,
+      file_size: file.size,
+    });
+    setUploading(false);
+    if (msgErr) {
+      toast.error('Could not send file', msgErr.message);
+      return;
+    }
+    toast.success('File sent');
+    refresh();
+  }
+
+  async function startConversationWith(empId: string) {
     const existing = conversations.find((c) =>
-      c.members?.some((m) => m.employee_id === selectedEmp) &&
-      c.members?.some((m) => m.employee_id === CURRENT_USER_ID) &&
+      c.members?.some((m) => m.employee_id === empId) &&
+      c.members?.some((m) => m.employee_id === currentUserId) &&
       (c.members?.length ?? 0) === 2,
     );
     if (existing) {
       setActiveId(existing.id);
-      setNewChatOpen(false);
-      setSelectedEmp(null);
+      onClearTarget?.();
       return;
     }
     const { data: conv, error } = await supabase.from('conversations').insert({}).select().single();
@@ -101,34 +230,75 @@ export function MessengerPage({ data }: MessengerPageProps) {
       toast.error('Could not start conversation', error?.message);
       return;
     }
-    const { error: mErr } = await supabase.from('conversation_members').insert([
-      { conversation_id: conv.id, employee_id: CURRENT_USER_ID },
-      { conversation_id: conv.id, employee_id: selectedEmp },
+    await supabase.from('conversation_members').insert([
+      { conversation_id: conv.id, employee_id: currentUserId },
+      { conversation_id: conv.id, employee_id: empId },
     ]);
-    if (mErr) {
-      toast.error('Could not add members', mErr.message);
-      return;
-    }
     toast.success('Conversation started');
-    setNewChatOpen(false);
-    setSelectedEmp(null);
+    onClearTarget?.();
     refresh();
     setTimeout(() => setActiveId(conv.id), 300);
   }
 
+  async function handleStartCall(type: CallType) {
+    if (!activeConv || !otherMember) return;
+    setCallType(type);
+    setIsIncoming(false);
+    setCallState('calling');
+    setMuted(false);
+    setVideoEnabled(type === 'video');
+    try {
+      await rtcStartCall(type);
+    } catch {
+      toast.error('Could not access camera/microphone', 'Please allow permissions and try again.');
+      setCallState('idle');
+    }
+  }
+
+  async function handleAcceptCall() {
+    if (!incomingSignal) return;
+    setCallState('connected');
+    setCallDuration(0);
+    try {
+      await rtcAcceptCall(incomingSignal);
+    } catch {
+      toast.error('Could not accept call', 'Please allow permissions and try again.');
+      setCallState('idle');
+    }
+  }
+
+  function handleRejectCall() {
+    rtcRejectCall();
+    setCallState('rejected');
+  }
+
+  function handleEndCall() {
+    rtcEndCall();
+    setCallState('ended');
+    setCallDuration(0);
+  }
+
+  function handleToggleMute() {
+    rtcToggleMute();
+    setMuted((m) => !m);
+  }
+
+  function handleToggleVideo() {
+    rtcToggleVideo();
+    setVideoEnabled((v) => !v);
+  }
+
   const filteredEmployees = employees.filter((e) =>
-    e.id !== CURRENT_USER_ID &&
+    e.id !== currentUserId &&
     (!search || e.name.toLowerCase().includes(search.toLowerCase()) ||
      (e.position ?? '').toLowerCase().includes(search.toLowerCase())),
   );
-
-  const otherMember = activeConv ? getOtherMember(activeConv) : null;
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
         title="Messenger"
-        description="Direct messages with your team"
+        description="Direct messages, voice & video calls with your team"
         actions={
           <Button onClick={() => setNewChatOpen(true)}>
             <Plus className="h-4 w-4" /> New chat
@@ -184,8 +354,8 @@ export function MessengerPage({ data }: MessengerPageProps) {
                           {lastMsg && <span className="shrink-0 text-[10px] text-ink-400">{timeAgo(lastMsg.created_at)}</span>}
                         </div>
                         <p className="truncate text-xs text-ink-500 dark:text-ink-400">
-                          {lastMsg?.sender_id === CURRENT_USER_ID ? 'You: ' : ''}
-                          {lastMsg?.content ?? 'No messages yet'}
+                          {lastMsg?.sender_id === currentUserId ? 'You: ' : ''}
+                          {lastMsg?.message_type === 'file' ? '📎 ' + lastMsg.file_name : lastMsg?.content ?? 'No messages yet'}
                         </p>
                       </div>
                     </button>
@@ -196,13 +366,10 @@ export function MessengerPage({ data }: MessengerPageProps) {
           </div>
 
           {/* Chat thread */}
-          <div className={cn(
-            'flex flex-1 flex-col',
-            !activeId && 'hidden md:flex',
-          )}>
+          <div className={cn('flex flex-1 flex-col', !activeId && 'hidden md:flex')}>
             {activeConv && otherMember ? (
               <>
-                {/* Header */}
+                {/* Header with call buttons */}
                 <div className="flex items-center gap-3 border-b border-ink-100 p-3 dark:border-white/[0.06]">
                   <button
                     onClick={() => setActiveId(null)}
@@ -210,33 +377,73 @@ export function MessengerPage({ data }: MessengerPageProps) {
                   >
                     <ArrowLeft className="h-4.5 w-4.5" />
                   </button>
-                  <Avatar name={otherMember.name} src={otherMember.avatar_url} size="sm" />
+                  <ClickableAvatar employee={otherMember} name={otherMember.name} src={otherMember.avatar_url} size="sm" onViewProfile={onViewProfile} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-semibold text-ink-900 dark:text-white">{otherMember.name}</p>
+                    <ClickableName employee={otherMember} name={otherMember.name} onViewProfile={onViewProfile} className="truncate text-[14px]" />
                     <p className="truncate text-xs text-ink-500 dark:text-ink-400">{otherMember.position}</p>
                   </div>
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-success-600 dark:text-success-400">
-                    <span className="h-2 w-2 rounded-full bg-success-500" /> Online
-                  </span>
+                  {/* Call buttons */}
+                  <button
+                    onClick={() => handleStartCall('voice')}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 transition-colors hover:bg-success-50 hover:text-success-600 dark:hover:bg-success-500/10 dark:hover:text-success-400"
+                    aria-label="Voice call"
+                  >
+                    <Phone className="h-4.5 w-4.5" />
+                  </button>
+                  <button
+                    onClick={() => handleStartCall('video')}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 transition-colors hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
+                    aria-label="Video call"
+                  >
+                    <Video className="h-4.5 w-4.5" />
+                  </button>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 space-y-3 overflow-y-auto p-4">
                   {activeConv.messages?.map((msg) => {
-                    const mine = msg.sender_id === CURRENT_USER_ID;
+                    const mine = msg.sender_id === currentUserId;
                     return (
                       <div key={msg.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
                         <div className={cn('flex max-w-[75%] items-end gap-2', mine && 'flex-row-reverse')}>
                           {!mine && <Avatar name={msg.sender?.name ?? otherMember.name} src={msg.sender?.avatar_url} size="xs" />}
                           <div>
-                            <div className={cn(
-                              'rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed',
-                              mine
-                                ? 'rounded-br-md bg-brand-600 text-white'
-                                : 'rounded-bl-md bg-ink-100 text-ink-800 dark:bg-white/[0.06] dark:text-ink-200',
-                            )}>
-                              {msg.content}
-                            </div>
+                            {msg.message_type === 'file' && msg.file_url ? (
+                              <a
+                                href={msg.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={cn(
+                                  'flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-[13px] transition-colors',
+                                  mine
+                                    ? 'rounded-br-md bg-brand-600 text-white'
+                                    : 'rounded-bl-md bg-ink-100 text-ink-800 dark:bg-white/[0.06] dark:text-ink-200',
+                                )}
+                              >
+                                <span className={cn(
+                                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                                  mine ? 'bg-white/20' : 'bg-brand-500/10 text-brand-500',
+                                )}>
+                                  <FileText className="h-4 w-4" />
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="truncate font-medium">{msg.file_name}</p>
+                                  <p className={cn('text-[10px]', mine ? 'text-white/70' : 'text-ink-400')}>
+                                    {msg.file_size ? `${(msg.file_size / 1024).toFixed(0)} KB` : ''}
+                                  </p>
+                                </div>
+                                <Download className={cn('h-4 w-4 shrink-0', mine ? 'text-white/70' : 'text-ink-400')} />
+                              </a>
+                            ) : (
+                              <div className={cn(
+                                'rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed',
+                                mine
+                                  ? 'rounded-br-md bg-brand-600 text-white'
+                                  : 'rounded-bl-md bg-ink-100 text-ink-800 dark:bg-white/[0.06] dark:text-ink-200',
+                              )}>
+                                {msg.content}
+                              </div>
+                            )}
                             <p className={cn('mt-0.5 flex items-center gap-1 text-[10px] text-ink-400', mine ? 'justify-end' : 'justify-start')}>
                               {formatTime(msg.created_at)}
                               {mine && <CheckCheck className="h-3 w-3 text-brand-500" />}
@@ -249,8 +456,20 @@ export function MessengerPage({ data }: MessengerPageProps) {
                   <div ref={endRef} />
                 </div>
 
-                {/* Input */}
+                {/* Input bar */}
                 <div className="flex items-center gap-2 border-t border-ink-100 p-3 dark:border-white/[0.06]">
+                  <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-ink-400 transition-colors hover:bg-ink-100 hover:text-brand-600 dark:hover:bg-white/5 dark:hover:text-brand-400">
+                    {uploading ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-300 border-t-brand-500" />
+                    ) : (
+                      <Paperclip className="h-4.5 w-4.5" />
+                    )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }}
+                    />
+                  </label>
                   <input
                     type="text"
                     value={message}
@@ -293,7 +512,7 @@ export function MessengerPage({ data }: MessengerPageProps) {
         footer={
           <>
             <Button variant="outline" onClick={() => { setNewChatOpen(false); setSelectedEmp(null); }}>Cancel</Button>
-            <Button onClick={startConversation} disabled={!selectedEmp}>Start chat</Button>
+            <Button onClick={() => selectedEmp && startConversationWith(selectedEmp)} disabled={!selectedEmp}>Start chat</Button>
           </>
         }
       >
@@ -320,6 +539,24 @@ export function MessengerPage({ data }: MessengerPageProps) {
           })}
         </div>
       </Modal>
+
+      {/* Call overlay */}
+      <CallOverlay
+        state={callState}
+        callType={callType}
+        otherUser={otherMember}
+        localStream={localStream}
+        remoteStream={remoteStream}
+        callDuration={callDuration}
+        onAccept={handleAcceptCall}
+        onReject={handleRejectCall}
+        onEnd={handleEndCall}
+        onToggleMute={handleToggleMute}
+        onToggleVideo={handleToggleVideo}
+        muted={muted}
+        videoEnabled={videoEnabled}
+        isIncoming={isIncoming}
+      />
     </div>
   );
 }

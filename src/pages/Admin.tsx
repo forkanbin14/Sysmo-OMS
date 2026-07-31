@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Shield,
   Users,
@@ -28,6 +28,11 @@ import {
   TrendingUp,
   ArrowDownLeft,
   ArrowUpRight,
+  Palette,
+  Type,
+  Sparkles,
+  Check,
+  Monitor,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
 import type { Employee, EmployeeRole, EmployeeStatus, EmployeeInput } from '@/types/database';
@@ -44,6 +49,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input, Select } from '@/components/ui/Input';
 import { IconBadge } from '@/components/ui/IconBadge';
 import { cn, formatCurrency, sortBy } from '@/lib/utils';
+import { THEME_PRESETS, FONT_OPTIONS, ICON_SETS } from '@/lib/themes';
 
 /* ============================================================
    Role definitions
@@ -73,13 +79,14 @@ const PERMISSIONS: { label: string; roles: EmployeeRole[] }[] = [
   { label: 'Access admin panel',        roles: ['admin'] },
 ];
 
-type Tab = 'overview' | 'employees' | 'roles' | 'transactions' | 'system';
+type Tab = 'overview' | 'employees' | 'roles' | 'transactions' | 'appearance' | 'system';
 
 const tabs: { key: Tab; label: string; icon: typeof Activity }[] = [
   { key: 'overview',     label: 'Overview',     icon: Activity },
   { key: 'employees',    label: 'Employees',    icon: Users },
   { key: 'roles',        label: 'Roles',        icon: Shield },
   { key: 'transactions', label: 'Transactions', icon: Wallet },
+  { key: 'appearance',   label: 'Appearance',   icon: Palette },
   { key: 'system',       label: 'System',       icon: Settings },
 ];
 
@@ -130,6 +137,7 @@ export function Admin({ data, onNavigate }: AdminProps) {
       {tab === 'employees'    && <EmployeesTab data={data} />}
       {tab === 'roles'        && <RolesTab data={data} />}
       {tab === 'transactions' && <TransactionsTab data={data} />}
+      {tab === 'appearance'   && <AppearanceTab data={data} />}
       {tab === 'system'       && <SystemTab data={data} />}
     </div>
   );
@@ -572,23 +580,8 @@ const TXN_STATUS_META: Record<Transaction['status'], { label: string; tone: 'suc
 };
 
 function TransactionsTab({ data }: { data: AppData }) {
-  const { employees } = data;
+  const { employees, transactions: dbTxns, refresh } = data;
   const toast = useToast();
-
-  // Generate mock transactions from employee salary data
-  const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    employees.slice(0, 8).map((e, i) => ({
-      id: `txn-${e.id}`,
-      employee_id: e.id,
-      employee_name: e.name,
-      avatar_url: e.avatar_url,
-      type: i % 4 === 0 ? 'bonus' : i % 5 === 0 ? 'deduction' : i % 7 === 0 ? 'reimbursement' : 'salary',
-      amount: i % 4 === 0 ? 5000 : i % 5 === 0 ? -250 : i % 7 === 0 ? 320 : e.salary ?? 0,
-      status: i % 6 === 0 ? 'pending' : i % 9 === 0 ? 'failed' : 'completed',
-      date: new Date(Date.now() - i * 86400000).toISOString().slice(0, 10),
-      note: i % 4 === 0 ? 'Q3 performance bonus' : i % 5 === 0 ? 'Late penalty' : i % 7 === 0 ? 'Travel reimbursement' : 'Monthly salary',
-    })),
-  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({
@@ -599,6 +592,19 @@ function TransactionsTab({ data }: { data: AppData }) {
   });
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState('all');
+
+  // Map DB transactions to display format
+  const transactions: Transaction[] = dbTxns.map((t) => ({
+    id: t.id,
+    employee_id: t.employee_id,
+    employee_name: t.employee?.name ?? 'Unknown',
+    avatar_url: t.employee?.avatar_url ?? null,
+    type: t.type,
+    amount: t.type === 'deduction' ? -Math.abs(t.amount) : Math.abs(t.amount),
+    status: t.status === 'paid' ? 'completed' : t.status === 'failed' ? 'failed' : 'pending',
+    date: t.payment_date,
+    note: t.description ?? TXN_TYPE_META[t.type].label,
+  }));
 
   const filtered = filter === 'all' ? transactions : transactions.filter((t) => t.type === filter);
 
@@ -616,26 +622,28 @@ function TransactionsTab({ data }: { data: AppData }) {
     setSaving(true);
     const emp = employees.find((e) => e.id === form.employee_id);
     if (!emp) { setSaving(false); return; }
-    const newTxn: Transaction = {
-      id: `txn-${Date.now()}`,
-      employee_id: emp.id,
-      employee_name: emp.name,
-      avatar_url: emp.avatar_url,
+    const dbStatus = form.type === 'salary' ? 'pending' : 'pending';
+    const { error } = await supabase.from('salary_transactions').insert({
+      employee_id: form.employee_id,
       type: form.type,
-      amount: form.type === 'deduction' ? -Math.abs(form.amount) : Math.abs(form.amount),
-      status: 'pending',
-      date: new Date().toISOString().slice(0, 10),
-      note: form.note || TXN_TYPE_META[form.type].label,
-    };
-    setTransactions((prev) => [newTxn, ...prev]);
+      amount: Math.abs(form.amount),
+      description: form.note || TXN_TYPE_META[form.type].label,
+      payment_date: new Date().toISOString().slice(0, 10),
+      status: dbStatus,
+    });
     setSaving(false);
+    if (error) { toast.error('Could not create transaction', error.message); return; }
     setModalOpen(false);
     toast.success('Transaction created', `${TXN_TYPE_META[form.type].label} for ${emp.name}`);
+    refresh();
   }
 
-  function updateTxnStatus(id: string, status: Transaction['status']) {
-    setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+  async function updateTxnStatus(id: string, status: Transaction['status']) {
+    const dbStatus = status === 'completed' ? 'paid' : status === 'failed' ? 'failed' : 'pending';
+    const { error } = await supabase.from('salary_transactions').update({ status: dbStatus }).eq('id', id);
+    if (error) { toast.error('Could not update status', error.message); return; }
     toast.success(`Transaction ${status}`);
+    refresh();
   }
 
   return (
@@ -788,6 +796,191 @@ function TransactionsTab({ data }: { data: AppData }) {
           </Field>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+/* ============================================================
+   Appearance tab — 20+ theme presets, fonts, icon sets, layout
+   ============================================================ */
+function AppearanceTab({ data }: { data: AppData }) {
+  const { refresh } = data;
+  const toast = useToast();
+  const [settings, setSettings] = useState({
+    theme_key: 'atlas-midnight',
+    accent_color: '#4f46e5',
+    icon_set: 'lucide',
+    layout_density: 'comfortable' as 'compact' | 'comfortable' | 'spacious',
+    sidebar_style: 'expanded' as 'expanded' | 'icons-only' | 'hidden',
+    font_family: 'inter',
+    custom_logo_url: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('app_settings').select('*').limit(1).then(({ data: rows }) => {
+      if (rows && rows.length > 0) {
+        const s = rows[0];
+        setSettings({
+          theme_key: s.theme_key,
+          accent_color: s.accent_color,
+          icon_set: s.icon_set,
+          layout_density: s.layout_density,
+          sidebar_style: s.sidebar_style,
+          font_family: s.font_family,
+          custom_logo_url: s.custom_logo_url ?? '',
+        });
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  async function saveSettings() {
+    setSaving(true);
+    const { data: existing } = await supabase.from('app_settings').select('id').limit(1);
+    let error;
+    if (existing && existing.length > 0) {
+      ({ error } = await supabase.from('app_settings').update({
+        ...settings,
+        updated_at: new Date().toISOString(),
+      }).eq('id', existing[0].id));
+    } else {
+      ({ error } = await supabase.from('app_settings').insert(settings));
+    }
+    setSaving(false);
+    if (error) { toast.error('Could not save settings', error.message); return; }
+    toast.success('Appearance saved', 'Theme and layout updated');
+    refresh();
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Theme presets */}
+      <Card className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <div className="mb-4 flex items-center gap-2">
+          <Palette className="h-5 w-5 text-brand-400" />
+          <h3 className="font-display text-base font-semibold text-ink-900 dark:text-white">Theme presets</h3>
+          <span className="ml-auto text-xs text-ink-500">{THEME_PRESETS.length} themes available</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {THEME_PRESETS.map((theme) => {
+            const active = settings.theme_key === theme.key;
+            return (
+              <button
+                key={theme.key}
+                onClick={() => setSettings({ ...settings, theme_key: theme.key, accent_color: theme.accent })}
+                className={cn(
+                  'group relative overflow-hidden rounded-xl border p-3 text-left transition-all',
+                  active ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-ink-200 hover:border-ink-300 dark:border-white/[0.08] dark:hover:border-white/[0.15]',
+                )}
+              >
+                {/* Color preview */}
+                <div className="mb-2 flex gap-1.5">
+                  {theme.preview.map((color, i) => (
+                    <div key={i} className="h-8 flex-1 rounded-lg" style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+                <p className="text-[13px] font-semibold text-ink-900 dark:text-white">{theme.name}</p>
+                <p className="mt-0.5 text-[11px] text-ink-500 dark:text-ink-400">{theme.description}</p>
+                {active && (
+                  <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white">
+                    <Check className="h-3 w-3" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Custom accent color */}
+      <Card className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <div className="mb-4 flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-accent-400" />
+          <h3 className="font-display text-base font-semibold text-ink-900 dark:text-white">Custom accent color</h3>
+        </div>
+        <div className="flex items-center gap-4">
+          <input
+            type="color"
+            value={settings.accent_color}
+            onChange={(e) => setSettings({ ...settings, accent_color: e.target.value })}
+            className="h-12 w-12 cursor-pointer rounded-lg border border-ink-200 dark:border-white/[0.08]"
+          />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-ink-700 dark:text-ink-200">{settings.accent_color}</p>
+            <p className="text-xs text-ink-500 dark:text-ink-400">Override the theme's default accent</p>
+          </div>
+          <div className="h-10 w-10 rounded-xl" style={{ backgroundColor: settings.accent_color }} />
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Font family */}
+        <Card className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
+          <div className="mb-4 flex items-center gap-2">
+            <Type className="h-5 w-5 text-brand-400" />
+            <h3 className="font-display text-base font-semibold text-ink-900 dark:text-white">Font family</h3>
+          </div>
+          <div className="space-y-2">
+            {FONT_OPTIONS.map((font) => {
+              const active = settings.font_family === font.key;
+              return (
+                <button
+                  key={font.key}
+                  onClick={() => setSettings({ ...settings, font_family: font.key })}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-xl border p-3 text-left transition-all',
+                    active ? 'border-brand-500 bg-brand-500/5' : 'border-ink-200 hover:border-ink-300 dark:border-white/[0.08]',
+                  )}
+                >
+                  <span className="text-sm font-medium text-ink-700 dark:text-ink-200" style={{ fontFamily: font.family }}>{font.name}</span>
+                  {active && <Check className="h-4 w-4 text-brand-500" />}
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Icon set + layout */}
+        <Card className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">
+          <div className="mb-4 flex items-center gap-2">
+            <Monitor className="h-5 w-5 text-accent-400" />
+            <h3 className="font-display text-base font-semibold text-ink-900 dark:text-white">Icons & layout</h3>
+          </div>
+          <div className="space-y-4">
+            <Field label="Icon set">
+              <Select value={settings.icon_set} onChange={(e) => setSettings({ ...settings, icon_set: e.target.value })}>
+                {ICON_SETS.map((set) => <option key={set.key} value={set.key}>{set.name}</option>)}
+              </Select>
+            </Field>
+            <Field label="Layout density">
+              <Select value={settings.layout_density} onChange={(e) => setSettings({ ...settings, layout_density: e.target.value as 'compact' | 'comfortable' | 'spacious' })}>
+                <option value="compact">Compact</option>
+                <option value="comfortable">Comfortable</option>
+                <option value="spacious">Spacious</option>
+              </Select>
+            </Field>
+            <Field label="Sidebar style">
+              <Select value={settings.sidebar_style} onChange={(e) => setSettings({ ...settings, sidebar_style: e.target.value as 'expanded' | 'icons-only' | 'hidden' })}>
+                <option value="expanded">Expanded</option>
+                <option value="icons-only">Icons only</option>
+                <option value="hidden">Hidden</option>
+              </Select>
+            </Field>
+            <Field label="Custom logo URL" hint="Replace the sidebar logo with your own image">
+              <Input value={settings.custom_logo_url} onChange={(e) => setSettings({ ...settings, custom_logo_url: e.target.value })} placeholder="https://…" />
+            </Field>
+          </div>
+        </Card>
+      </div>
+
+      {/* Save button */}
+      <div className="flex justify-end">
+        <Button onClick={saveSettings} loading={saving} disabled={loading} size="lg">
+          <Check className="h-4 w-4" /> Save appearance settings
+        </Button>
+      </div>
     </div>
   );
 }

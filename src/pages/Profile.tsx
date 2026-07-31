@@ -18,11 +18,15 @@ import {
   TrendingUp,
   Users,
   ChevronDown,
+  MessageSquare,
+  Camera,
+  Upload,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
-import type { ProfileInput } from '@/types/database';
+import type { ProfileInput, Employee } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -35,22 +39,29 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils';
 
 interface ProfilePageProps {
   data: AppData;
+  profileId?: string | null;
+  onMessage?: (empId: string) => void;
+  onViewProfile?: (empId: string) => void;
 }
 
-export function ProfilePage({ data }: ProfilePageProps) {
+export function ProfilePage({ data, profileId, onMessage, onViewProfile }: ProfilePageProps) {
   const { profiles, employees, departments, tasks, projects, refresh, loading } = data;
   const toast = useToast();
+  const { user: currentUser } = useCurrentUser();
 
   const [editing, setEditing] = useState(false);
-  const [selectedEmpId, setSelectedEmpId] = useState<string | null>(null);
   const [form, setForm] = useState<ProfileInput | null>(null);
   const [saving, setSaving] = useState(false);
   const [skillInput, setSkillInput] = useState('');
   const [search, setSearch] = useState('');
   const [listOpen, setListOpen] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
 
-  const selectedEmployee = employees.find((e) => e.id === selectedEmpId) ?? employees[0];
+  const targetId = profileId ?? currentUser?.id ?? null;
+  const selectedEmployee = employees.find((e) => e.id === targetId) ?? employees[0];
   const selectedProfile = profiles.find((p) => p.employee_id === selectedEmployee?.id);
+  const isOwnProfile = currentUser?.id === selectedEmployee?.id;
 
   const empTasks = tasks.filter((t) => t.assignee_id === selectedEmployee?.id);
   const empProjects = projects.filter((p) =>
@@ -76,7 +87,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
   );
 
   function selectEmployee(id: string) {
-    setSelectedEmpId(id);
+    onViewProfile?.(id);
     setListOpen(false);
   }
 
@@ -127,6 +138,50 @@ export function ProfilePage({ data }: ProfilePageProps) {
     refresh();
   }
 
+  async function uploadAvatar(file: File) {
+    if (!selectedEmployee) return;
+    setAvatarUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `avatars/${selectedEmployee.id}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('chat-files').upload(path, file, { upsert: true });
+    if (upErr) {
+      toast.error('Upload failed', upErr.message);
+      setAvatarUploading(false);
+      return;
+    }
+    const url = supabase.storage.from('chat-files').getPublicUrl(path).data.publicUrl;
+    const { error: dbErr } = await supabase.from('employees').update({ avatar_url: url }).eq('id', selectedEmployee.id);
+    setAvatarUploading(false);
+    if (dbErr) {
+      toast.error('Could not update avatar', dbErr.message);
+      return;
+    }
+    toast.success('Profile photo updated');
+    refresh();
+  }
+
+  async function uploadCover(file: File) {
+    if (!selectedProfile) return;
+    setCoverUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `covers/${selectedProfile.id}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('chat-files').upload(path, file, { upsert: true });
+    if (upErr) {
+      toast.error('Upload failed', upErr.message);
+      setCoverUploading(false);
+      return;
+    }
+    const url = supabase.storage.from('chat-files').getPublicUrl(path).data.publicUrl;
+    const { error: dbErr } = await supabase.from('profiles').update({ cover_url: url, updated_at: new Date().toISOString() }).eq('id', selectedProfile.id);
+    setCoverUploading(false);
+    if (dbErr) {
+      toast.error('Could not update cover', dbErr.message);
+      return;
+    }
+    toast.success('Cover photo updated');
+    refresh();
+  }
+
   if (loading || !selectedEmployee) {
     return (
       <div className="space-y-6">
@@ -141,12 +196,12 @@ export function ProfilePage({ data }: ProfilePageProps) {
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Profiles"
-        description="Rich employee profiles with skills, bio and more"
+        title={isOwnProfile ? 'My Profile' : 'Profile'}
+        description={isOwnProfile ? 'Manage your profile, skills and resume' : `${selectedEmployee.name}'s profile`}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
-        {/* ── Desktop sidebar: employee list ── */}
+        {/* Desktop sidebar: employee list */}
         <Card className="hidden h-fit lg:block lg:sticky lg:top-20 dark:bg-ink-850/60 dark:border-white/[0.06]">
           <div className="border-b border-ink-100 p-3 dark:border-white/[0.06]">
             <Input
@@ -179,9 +234,8 @@ export function ProfilePage({ data }: ProfilePageProps) {
           </div>
         </Card>
 
-        {/* ── Mobile: horizontal avatar strip + collapsible list ── */}
+        {/* Mobile: avatar strip + collapsible list */}
         <div className="lg:hidden">
-          {/* Avatar carousel */}
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
             {employees.map((emp) => {
               const active = emp.id === selectedEmployee.id;
@@ -189,7 +243,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
                 <button
                   key={emp.id}
                   onClick={() => selectEmployee(emp.id)}
-                  className="group flex flex-col items-center gap-1.5 shrink-0"
+                  className="group flex shrink-0 flex-col items-center gap-1.5"
                 >
                   <span className={cn(
                     'rounded-full p-0.5 transition-all',
@@ -208,7 +262,6 @@ export function ProfilePage({ data }: ProfilePageProps) {
             })}
           </div>
 
-          {/* Expandable full list with search */}
           <button
             onClick={() => setListOpen((v) => !v)}
             className="mt-1 flex w-full items-center justify-between rounded-xl border border-ink-200 px-3 py-2.5 text-[13px] font-medium text-ink-600 transition-colors hover:bg-ink-50 dark:border-white/[0.08] dark:text-ink-300 dark:hover:bg-white/[0.03]"
@@ -272,12 +325,19 @@ export function ProfilePage({ data }: ProfilePageProps) {
                 <div className="h-full w-full bg-gradient-to-br from-brand-600 via-brand-700 to-accent-600" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <button
-                onClick={openEdit}
-                className="absolute right-3 top-3 flex h-9 items-center gap-1.5 rounded-xl bg-white/20 px-3 text-[13px] font-medium text-white backdrop-blur-md transition-colors hover:bg-white/30 active:scale-95 sm:right-4 sm:top-4"
-              >
-                <Pencil className="h-3.5 w-3.5" /> Edit
-              </button>
+
+              {/* Cover upload (own profile only) */}
+              {isOwnProfile && (
+                <label className="absolute right-3 top-3 flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-white/20 px-3 text-[13px] font-medium text-white backdrop-blur-md transition-colors hover:bg-white/30 active:scale-95 sm:right-4 sm:top-4">
+                  {coverUploading ? <span className="text-[11px]">Uploading…</span> : (<><Camera className="h-3.5 w-3.5" /> Cover</>)}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); }}
+                  />
+                </label>
+              )}
             </div>
 
             <div className="px-4 pb-5 sm:px-5">
@@ -290,20 +350,45 @@ export function ProfilePage({ data }: ProfilePageProps) {
                     ring
                     className="!h-20 !w-20 !text-xl ring-4 ring-white shadow-float dark:ring-ink-850 sm:!h-28 sm:!w-28 sm:!text-2xl"
                   />
-                  <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-success-500 ring-2 ring-white dark:ring-ink-850 sm:h-7 sm:w-7">
+                  {/* Avatar upload (own profile only) */}
+                  {isOwnProfile && (
+                    <label className="absolute bottom-1 right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-brand-600 text-white shadow-soft ring-2 ring-white transition-transform hover:scale-110 dark:ring-ink-850">
+                      {avatarUploading ? (
+                        <span className="h-2 w-2 animate-spin rounded-full border border-white/40 border-t-white" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }}
+                      />
+                    </label>
+                  )}
+                  <span className="absolute left-1 bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-success-500 ring-2 ring-white dark:ring-ink-850 sm:h-7 sm:w-7">
                     <span className="h-2 w-2 rounded-full bg-white sm:h-2.5 sm:w-2.5" />
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-2 sm:pb-2">
+
+                <div className="flex flex-wrap items-center gap-2 sm:pb-2">
                   <Badge tone="brand" soft>
                     <Shield className="mr-1 h-3 w-3" />
                     {selectedProfile?.role ?? selectedEmployee.role}
                   </Badge>
-                  {selectedEmployee.status === 'active' && (
-                    <Badge tone="success" soft>Active</Badge>
+                  {selectedEmployee.status === 'active' && <Badge tone="success" soft>Active</Badge>}
+                  {selectedEmployee.status === 'on-leave' && <Badge tone="warning" soft>On Leave</Badge>}
+                  {/* Message button — only on OTHER profiles */}
+                  {!isOwnProfile && onMessage && (
+                    <Button size="sm" onClick={() => onMessage(selectedEmployee.id)}>
+                      <MessageSquare className="h-3.5 w-3.5" /> Message
+                    </Button>
                   )}
-                  {selectedEmployee.status === 'on-leave' && (
-                    <Badge tone="warning" soft>On Leave</Badge>
+                  {/* Edit button — only on OWN profile */}
+                  {isOwnProfile && (
+                    <Button size="sm" onClick={openEdit}>
+                      <Pencil className="h-3.5 w-3.5" /> Edit Profile
+                    </Button>
                   )}
                 </div>
               </div>
@@ -322,7 +407,6 @@ export function ProfilePage({ data }: ProfilePageProps) {
                 )}
               </div>
 
-              {/* Contact row */}
               <div className="mt-4 flex flex-wrap gap-2">
                 <ContactChip icon={Mail} text={selectedEmployee.email} />
                 {selectedEmployee.phone && <ContactChip icon={Phone} text={selectedEmployee.phone} />}
@@ -335,7 +419,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
             </div>
           </Card>
 
-          {/* Stats — 1 col mobile, 3 col sm+ */}
+          {/* Stats */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
               <CardContent className="flex items-center gap-3">
@@ -372,7 +456,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
             </Card>
           </div>
 
-          {/* Skills + Experience — stacked mobile, could be 2-col on xl */}
+          {/* Skills + Experience */}
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <Card className="dark:bg-ink-850/60 dark:border-white/[0.06]">
               <CardHeader>
@@ -439,25 +523,30 @@ export function ProfilePage({ data }: ProfilePageProps) {
             </Card>
           </div>
 
-          {/* Profile completion */}
-          <div className="rounded-2xl bg-gradient-to-r from-brand-50 to-accent-50 p-4 ring-1 ring-brand-100 dark:from-brand-500/10 dark:to-accent-500/10 dark:ring-brand-500/20">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-brand-500 dark:text-brand-400" />
-                <span className="text-sm font-semibold text-ink-800 dark:text-white">Profile completion</span>
+          {/* Profile completion (own only) */}
+          {isOwnProfile && (
+            <div className="rounded-2xl bg-gradient-to-r from-brand-50 to-accent-50 p-4 ring-1 ring-brand-100 dark:from-brand-500/10 dark:to-accent-500/10 dark:ring-brand-500/20">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+                  <span className="text-sm font-semibold text-ink-800 dark:text-white">Profile completion</span>
+                </div>
+                <span className="font-display text-sm font-bold text-brand-700 dark:text-brand-400">{profileCompletion}%</span>
               </div>
-              <span className="font-display text-sm font-bold text-brand-700 dark:text-brand-400">{profileCompletion}%</span>
+              <ProgressBar value={profileCompletion} barClassName="bg-gradient-to-r from-brand-500 to-accent-500" />
+              {profileCompletion < 100 && (
+                <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">Add a cover photo, skills and resume to reach 100%</p>
+              )}
             </div>
-            <ProgressBar value={profileCompletion} barClassName="bg-gradient-to-r from-brand-500 to-accent-500" />
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Edit modal */}
+      {/* Edit modal — own profile only */}
       <Modal
         open={editing}
         onClose={() => setEditing(false)}
-        title="Edit Profile"
+        title="Edit My Profile"
         description={selectedEmployee.name}
         size="lg"
         footer={
@@ -469,7 +558,7 @@ export function ProfilePage({ data }: ProfilePageProps) {
       >
         {form && (
           <div className="space-y-4">
-            <Field label="Cover photo URL" hint="A wide landscape image for your profile banner.">
+            <Field label="Cover photo URL" hint="Paste an image URL, or use the camera button on the cover.">
               <Input
                 value={form.cover_url ?? ''}
                 onChange={(e) => setForm({ ...form, cover_url: e.target.value })}

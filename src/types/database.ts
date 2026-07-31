@@ -197,5 +197,33 @@ export interface Message {
   sender_id: string | null;
   content: string;
   created_at: string;
+  message_type: 'text' | 'file' | 'call';
+  file_url: string | null;
+  file_name: string | null;
+  file_size: number | null;
   sender?: Employee | null;
+}
+
+export interface AppSettings {
+  id: string;
+  theme_key: string;
+  accent_color: string;
+  icon_set: string;
+  layout_density: 'compact' | 'comfortable' | 'spacious';
+  sidebar_style: 'expanded' | 'icons-only' | 'hidden';
+  font_family: string;
+  custom_logo_url: string | null;
+  custom_labels: Record<string, string>;
+  updated_at: string;
+}
+
+export interface CallSignal {
+  id: string;
+  call_id: string;
+  conversation_id: string;
+  sender_id: string | null;
+  receiver_id: string | null;
+  type: 'offer' | 'answer' | 'ice-candidate' | 'call-start' | 'call-end' | 'call-rejected' | 'ringing';
+  payload: Record<string, unknown> | null;
+  created_at: string;
 }

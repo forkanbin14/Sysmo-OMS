@@ -31,6 +31,7 @@ import { cn, formatCurrency, formatDateShort, dueLabel } from '@/lib/utils';
 interface DashboardProps {
   data: AppData;
   onNavigate: (page: PageKey) => void;
+  onViewProfile?: (empId: string) => void;
 }
 
 export function Dashboard({ data, onNavigate }: DashboardProps) {

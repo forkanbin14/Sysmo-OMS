@@ -32,6 +32,7 @@ type ViewMode = 'grid' | 'table';
 
 interface EmployeesProps {
   data: AppData;
+  onViewProfile?: (empId: string) => void;
 }
 
 const emptyForm: EmployeeInput = {
@@ -47,7 +48,7 @@ const emptyForm: EmployeeInput = {
   salary: 0,
 };
 
-export function Employees({ data }: EmployeesProps) {
+export function Employees({ data, onViewProfile }: EmployeesProps) {
   const { employees, departments, loading, refresh } = data;
   const toast = useToast();
 

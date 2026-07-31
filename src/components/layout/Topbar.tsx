@@ -10,9 +10,13 @@ import {
   LogOut,
   Shield,
   Sparkles,
+  Check,
+  Users as UsersIcon,
 } from 'lucide-react';
+import type { Employee } from '@/types/database';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface TopbarProps {
   title: string;
@@ -21,13 +25,17 @@ interface TopbarProps {
   onSearch: () => void;
   onOpenProfile: () => void;
   onOpenAI?: () => void;
+  employees: Employee[];
+  onSwitchUser: (id: string) => void;
 }
 
-export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile, onOpenAI }: TopbarProps) {
+export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile, onOpenAI, employees, onSwitchUser }: TopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const { user, isAdmin } = useCurrentUser();
 
   useEffect(() => {
     if (!dropdownOpen && !notifOpen) return;
@@ -52,6 +60,11 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
     { title: 'Q4 Campaign Kickoff starts in 1 hour', time: '45m ago', tone: 'warning' as const },
     { title: 'New employee Ava Thompson joined Marketing', time: '3h ago', tone: 'brand' as const },
   ];
+
+  const filteredEmployees = employees.filter((e) =>
+    !userSearch || e.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+    (e.position ?? '').toLowerCase().includes(userSearch.toLowerCase()),
+  );
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/[0.04] bg-ink-925/80 backdrop-blur-2xl">
@@ -147,7 +160,7 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           )}
         </div>
 
-        {/* Profile button + dropdown */}
+        {/* Profile button + dropdown + user switcher */}
         <div ref={dropdownRef} className="relative">
           <button
             onClick={() => setDropdownOpen((o) => !o)}
@@ -160,10 +173,10 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
             aria-haspopup="true"
             aria-expanded={dropdownOpen}
           >
-            <Avatar name="Alex Rivera" size="sm" ring />
+            <Avatar name={user?.name ?? 'Guest'} src={user?.avatar_url} size="sm" ring />
             <div className="hidden leading-tight sm:block">
-              <p className="text-[13px] font-semibold text-white">Alex Rivera</p>
-              <p className="text-[11px] text-ink-500">Administrator</p>
+              <p className="text-[13px] font-semibold text-white">{user?.name ?? 'Guest'}</p>
+              <p className="text-[11px] text-ink-500">{user?.position ?? '—'}</p>
             </div>
             <ChevronDown
               className={cn(
@@ -174,24 +187,32 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-white/[0.08] bg-ink-850/95 shadow-dark-float backdrop-blur-2xl animate-fade-in-scale">
+            <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-white/[0.08] bg-ink-850/95 shadow-dark-float backdrop-blur-2xl animate-fade-in-scale">
+              {/* Current user card */}
               <div className="flex items-center gap-3 border-b border-white/[0.06] bg-gradient-to-r from-brand-500/[0.08] to-transparent px-4 py-3">
-                <Avatar name="Alex Rivera" size="md" ring />
+                <Avatar name={user?.name ?? 'Guest'} src={user?.avatar_url} size="md" ring />
                 <div className="min-w-0">
-                  <p className="font-display text-[13px] font-bold text-white">Alex Rivera</p>
-                  <p className="truncate text-[11px] text-ink-500">alex.rivera@office.co</p>
-                  <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-danger-400 ring-1 ring-inset ring-danger-500/20">
-                    <Shield className="h-2.5 w-2.5" /> Admin
+                  <p className="font-display text-[13px] font-bold text-white">{user?.name}</p>
+                  <p className="truncate text-[11px] text-ink-500">{user?.email}</p>
+                  <span className={cn(
+                    'mt-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ring-1 ring-inset',
+                    isAdmin
+                      ? 'bg-danger-500/15 text-danger-400 ring-danger-500/20'
+                      : 'bg-brand-500/15 text-brand-300 ring-brand-500/20',
+                  )}>
+                    {isAdmin ? <><Shield className="h-2.5 w-2.5" /> Admin</> : <><User className="h-2.5 w-2.5" /> Employee</>}
                   </span>
                 </div>
               </div>
+
+              {/* Quick actions */}
               <div className="p-1">
                 <button
                   onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-ink-300 transition-colors hover:bg-white/5 hover:text-white"
                 >
                   <User className="h-3.5 w-3.5 text-ink-500" />
-                  View full profile
+                  View my profile
                 </button>
                 <button
                   onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
@@ -211,6 +232,46 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
                   </button>
                 )}
               </div>
+
+              {/* User switcher */}
+              <div className="border-t border-white/[0.06]">
+                <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
+                  <UsersIcon className="h-3.5 w-3.5 text-ink-500" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Switch user</p>
+                </div>
+                <div className="px-2 pb-1">
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Search…"
+                    className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 text-[12px] text-ink-200 placeholder:text-ink-600 focus:border-brand-500/30 focus:outline-none"
+                  />
+                </div>
+                <div className="max-h-44 overflow-y-auto p-1">
+                  {filteredEmployees.map((emp) => {
+                    const active = emp.id === user?.id;
+                    return (
+                      <button
+                        key={emp.id}
+                        onClick={() => { onSwitchUser(emp.id); setDropdownOpen(false); }}
+                        className={cn(
+                          'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors',
+                          active ? 'bg-brand-500/10' : 'hover:bg-white/5',
+                        )}
+                      >
+                        <Avatar name={emp.name} src={emp.avatar_url} size="xs" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[12px] font-medium text-ink-200">{emp.name}</p>
+                          <p className="truncate text-[10px] text-ink-500">{emp.role}</p>
+                        </div>
+                        {active && <Check className="h-3.5 w-3.5 shrink-0 text-brand-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="border-t border-white/[0.06] p-1">
                 <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-danger-400 transition-colors hover:bg-danger-500/10">
                   <LogOut className="h-3.5 w-3.5" />

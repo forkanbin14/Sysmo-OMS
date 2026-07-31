@@ -18,6 +18,7 @@ import { cn, dueLabel, formatDateShort } from '@/lib/utils';
 
 interface TasksProps {
   data: AppData;
+  onViewProfile?: (empId: string) => void;
 }
 
 const emptyForm: TaskInput = {
@@ -37,7 +38,7 @@ const columns: { key: TaskStatus; label: string; tone: string }[] = [
   { key: 'done', label: 'Done', tone: 'bg-success-500' },
 ];
 
-export function Tasks({ data }: TasksProps) {
+export function Tasks({ data, onViewProfile }: TasksProps) {
   const { tasks, projects, employees, loading, refresh } = data;
   const toast = useToast();
 

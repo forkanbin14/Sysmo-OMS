@@ -5,6 +5,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { ToastProvider } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { useAppData } from '@/hooks/useAppData';
+import { CurrentUserProvider, useCurrentUser } from '@/hooks/useCurrentUser';
 import { SearchPalette } from '@/components/search/SearchPalette';
 import { ProfilePanel } from '@/components/layout/ProfilePanel';
 import { AIAssistant } from '@/components/ai/AIAssistant';
@@ -44,13 +45,31 @@ function AppContent() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
+  const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
   const data = useAppData();
+  const { setFromEmployees, setUserId } = useCurrentUser();
+
+  // Sync current user from employees list
+  useEffect(() => {
+    if (data.employees.length > 0) setFromEmployees(data.employees);
+  }, [data.employees, setFromEmployees]);
 
   function navigate(p: PageKey) {
     setPage(p);
     setMobileOpen(false);
     setSearchOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function viewProfile(empId: string) {
+    setViewProfileId(empId);
+    navigate('profile');
+  }
+
+  function messageEmployee(empId: string) {
+    setMessageTargetId(empId);
+    navigate('messenger');
   }
 
   // Global Cmd+K / Ctrl+K to open search, Cmd+J for AI
@@ -94,10 +113,11 @@ function AppContent() {
           onSearch={() => setSearchOpen(true)}
           onOpenProfile={() => setProfileOpen(true)}
           onOpenAI={() => setAiOpen(true)}
+          employees={data.employees}
+          onSwitchUser={(id) => setUserId(id, data.employees)}
         />
 
         <main id="main-scroll" className="mx-auto max-w-[1400px] px-4 py-6 pb-28 sm:px-6 lg:px-8 lg:pb-8">
-          {/* Global error banner */}
           {data.error && !data.loading && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-danger-500/20 bg-danger-500/10 px-4 py-3 text-sm text-danger-300 animate-fade-in">
               <AlertCircle className="h-5 w-5 shrink-0" />
@@ -109,18 +129,32 @@ function AppContent() {
           )}
 
           <div key={page} className="animate-fade-in">
-            {page === 'dashboard' && <Dashboard data={data} onNavigate={navigate} />}
-            {page === 'employees' && <Employees data={data} />}
+            {page === 'dashboard' && <Dashboard data={data} onNavigate={navigate} onViewProfile={viewProfile} />}
+            {page === 'employees' && <Employees data={data} onViewProfile={viewProfile} />}
             {page === 'departments' && <Departments data={data} />}
             {page === 'projects' && <Projects data={data} />}
-            {page === 'tasks' && <Tasks data={data} />}
+            {page === 'tasks' && <Tasks data={data} onViewProfile={viewProfile} />}
             {page === 'attendance' && <Attendance data={data} />}
             {page === 'meetings' && <Meetings data={data} />}
             {page === 'admin' && <Admin data={data} onNavigate={navigate} />}
             {page === 'settings' && <Settings />}
-            {page === 'profile' && <ProfilePage data={data} />}
-            {page === 'feed' && <FeedPage data={data} />}
-            {page === 'messenger' && <MessengerPage data={data} />}
+            {page === 'profile' && (
+              <ProfilePage
+                data={data}
+                profileId={viewProfileId}
+                onMessage={messageEmployee}
+                onViewProfile={viewProfile}
+              />
+            )}
+            {page === 'feed' && <FeedPage data={data} onViewProfile={viewProfile} />}
+            {page === 'messenger' && (
+              <MessengerPage
+                data={data}
+                initialTargetId={messageTargetId}
+                onViewProfile={viewProfile}
+                onClearTarget={() => setMessageTargetId(null)}
+              />
+            )}
           </div>
         </main>
       </div>
@@ -163,7 +197,9 @@ function AppContent() {
 export default function App() {
   return (
     <ToastProvider>
-      <AppContent />
+      <CurrentUserProvider>
+        <AppContent />
+      </CurrentUserProvider>
     </ToastProvider>
   );
 }

@@ -8,30 +8,31 @@ import {
   Globe,
   Lock,
   Trash2,
-  Sparkles,
   PenLine,
 } from 'lucide-react';
 import type { AppData } from '@/hooks/useAppData';
 import type { Post } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Textarea } from '@/components/ui/Input';
+import { ClickableAvatar, ClickableName } from '@/components/shared/ClickableUser';
 import { cn, formatDate } from '@/lib/utils';
 
 interface FeedPageProps {
   data: AppData;
+  onViewProfile?: (empId: string) => void;
 }
 
-const CURRENT_USER_ID = '22222222-2222-2222-2222-222222222201';
-
-export function FeedPage({ data }: FeedPageProps) {
+export function FeedPage({ data, onViewProfile }: FeedPageProps) {
   const { posts, employees, refresh } = data;
   const toast = useToast();
+  const { user: currentUser } = useCurrentUser();
 
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -42,13 +43,13 @@ export function FeedPage({ data }: FeedPageProps) {
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [liking, setLiking] = useState<string | null>(null);
 
-  const currentUser = employees.find((e) => e.id === CURRENT_USER_ID) ?? employees[0];
+  const currentUserId = currentUser?.id ?? '';
 
   async function handlePost() {
-    if (!content.trim()) return;
+    if (!content.trim() || !currentUserId) return;
     setPosting(true);
     const { error } = await supabase.from('posts').insert({
-      author_id: CURRENT_USER_ID,
+      author_id: currentUserId,
       content: content.trim(),
       image_url: imageUrl.trim() || null,
       visibility,
@@ -66,7 +67,7 @@ export function FeedPage({ data }: FeedPageProps) {
   }
 
   async function toggleLike(post: Post) {
-    const existing = post.likes?.find((l) => l.employee_id === CURRENT_USER_ID);
+    const existing = post.likes?.find((l) => l.employee_id === currentUserId);
     setLiking(post.id);
     if (existing) {
       const { error } = await supabase.from('post_likes').delete().eq('id', existing.id);
@@ -74,7 +75,7 @@ export function FeedPage({ data }: FeedPageProps) {
     } else {
       const { error } = await supabase.from('post_likes').insert({
         post_id: post.id,
-        employee_id: CURRENT_USER_ID,
+        employee_id: currentUserId,
       });
       if (error) toast.error('Could not like', error.message);
     }
@@ -84,10 +85,10 @@ export function FeedPage({ data }: FeedPageProps) {
 
   async function addComment(postId: string) {
     const text = commentText[postId]?.trim();
-    if (!text) return;
+    if (!text || !currentUserId) return;
     const { error } = await supabase.from('post_comments').insert({
       post_id: postId,
-      author_id: CURRENT_USER_ID,
+      author_id: currentUserId,
       content: text,
     });
     if (error) {
@@ -99,7 +100,7 @@ export function FeedPage({ data }: FeedPageProps) {
   }
 
   async function deletePost(post: Post) {
-    if (post.author_id !== CURRENT_USER_ID) return;
+    if (post.author_id !== currentUserId) return;
     const { error } = await supabase.from('posts').delete().eq('id', post.id);
     if (error) {
       toast.error('Could not delete post', error.message);
@@ -202,20 +203,18 @@ export function FeedPage({ data }: FeedPageProps) {
         ) : (
           <div className="space-y-4 stagger">
             {posts.map((post) => {
-              const liked = post.likes?.some((l) => l.employee_id === CURRENT_USER_ID);
+              const liked = post.likes?.some((l) => l.employee_id === currentUserId);
               const likeCount = post.likes?.length ?? 0;
               const commentCount = post.comments?.length ?? 0;
-              const isAuthor = post.author_id === CURRENT_USER_ID;
+              const isAuthor = post.author_id === currentUserId;
               return (
                 <Card key={post.id} className="overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
                   {/* Header */}
                   <div className="flex items-start gap-3 p-4">
-                    <Avatar name={post.author?.name ?? 'Unknown'} src={post.author?.avatar_url} size="md" />
+                    <ClickableAvatar employee={post.author} name={post.author?.name ?? 'Unknown'} src={post.author?.avatar_url} size="md" onViewProfile={onViewProfile} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="truncate text-[14px] font-semibold text-ink-900 dark:text-white">
-                          {post.author?.name ?? 'Unknown'}
-                        </p>
+                        <ClickableName employee={post.author} name={post.author?.name ?? 'Unknown'} onViewProfile={onViewProfile} className="truncate text-[14px]" />
                         {post.author?.role === 'admin' && (
                           <Badge tone="brand" soft>Admin</Badge>
                         )}
@@ -289,10 +288,10 @@ export function FeedPage({ data }: FeedPageProps) {
                         <div className="space-y-3">
                           {post.comments.map((c) => (
                             <div key={c.id} className="flex gap-2.5">
-                              <Avatar name={c.author?.name ?? 'Unknown'} src={c.author?.avatar_url} size="sm" />
+                              <ClickableAvatar employee={c.author} name={c.author?.name ?? 'Unknown'} src={c.author?.avatar_url} size="sm" onViewProfile={onViewProfile} />
                               <div className="min-w-0 flex-1">
                                 <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-ink-100 dark:bg-white/[0.04] dark:ring-white/[0.06]">
-                                  <p className="text-[13px] font-semibold text-ink-900 dark:text-white">{c.author?.name}</p>
+                                  <ClickableName employee={c.author} name={c.author?.name ?? 'Unknown'} onViewProfile={onViewProfile} className="text-[13px]" />
                                   <p className="text-[13px] text-ink-700 dark:text-ink-300">{c.content}</p>
                                 </div>
                                 <p className="mt-0.5 pl-3 text-[11px] text-ink-400 dark:text-ink-500">{formatDate(c.created_at)}</p>
