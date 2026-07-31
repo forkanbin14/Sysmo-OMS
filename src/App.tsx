@@ -5,11 +5,12 @@ import { Topbar } from '@/components/layout/Topbar';
 import { ToastProvider } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { useAppData } from '@/hooks/useAppData';
-import { CurrentUserProvider, useCurrentUser } from '@/hooks/useCurrentUser';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { SearchPalette } from '@/components/search/SearchPalette';
 import { ProfilePanel } from '@/components/layout/ProfilePanel';
 import { AIAssistant } from '@/components/ai/AIAssistant';
 import { BottomNav, MoreSheet } from '@/components/layout/BottomNav';
+import { AuthPage } from '@/pages/Auth';
 import { Dashboard } from '@/pages/Dashboard';
 import { Employees } from '@/pages/Employees';
 import { Departments } from '@/pages/Departments';
@@ -39,6 +40,7 @@ const pageMeta: Record<PageKey, { title: string; subtitle: string }> = {
 };
 
 function AppContent() {
+  const { session, loading: authLoading } = useAuth();
   const [page, setPage] = useState<PageKey>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -48,12 +50,6 @@ function AppContent() {
   const [viewProfileId, setViewProfileId] = useState<string | null>(null);
   const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
   const data = useAppData();
-  const { setFromEmployees, setUserId } = useCurrentUser();
-
-  // Sync current user from employees list
-  useEffect(() => {
-    if (data.employees.length > 0) setFromEmployees(data.employees);
-  }, [data.employees, setFromEmployees]);
 
   function navigate(p: PageKey) {
     setPage(p);
@@ -72,7 +68,6 @@ function AppContent() {
     navigate('messenger');
   }
 
-  // Global Cmd+K / Ctrl+K to open search, Cmd+J for AI
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -88,11 +83,23 @@ function AppContent() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  // Reset scroll on page change
   useEffect(() => {
     const main = document.getElementById('main-scroll');
     if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
   }, [page]);
+
+  // Show auth page if not signed in
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-ink-925">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink-700 border-t-brand-500" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthPage />;
+  }
 
   const meta = pageMeta[page];
 
@@ -113,8 +120,6 @@ function AppContent() {
           onSearch={() => setSearchOpen(true)}
           onOpenProfile={() => setProfileOpen(true)}
           onOpenAI={() => setAiOpen(true)}
-          employees={data.employees}
-          onSwitchUser={(id) => setUserId(id, data.employees)}
         />
 
         <main id="main-scroll" className="mx-auto max-w-[1400px] px-4 py-6 pb-28 sm:px-6 lg:px-8 lg:pb-8">
@@ -197,9 +202,9 @@ function AppContent() {
 export default function App() {
   return (
     <ToastProvider>
-      <CurrentUserProvider>
+      <AuthProvider>
         <AppContent />
-      </CurrentUserProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 }

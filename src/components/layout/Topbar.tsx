@@ -10,13 +10,10 @@ import {
   LogOut,
   Shield,
   Sparkles,
-  Check,
-  Users as UsersIcon,
 } from 'lucide-react';
-import type { Employee } from '@/types/database';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TopbarProps {
   title: string;
@@ -25,17 +22,14 @@ interface TopbarProps {
   onSearch: () => void;
   onOpenProfile: () => void;
   onOpenAI?: () => void;
-  employees: Employee[];
-  onSwitchUser: (id: string) => void;
 }
 
-export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile, onOpenAI, employees, onSwitchUser }: TopbarProps) {
+export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile, onOpenAI }: TopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [userSearch, setUserSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-  const { user, isAdmin } = useCurrentUser();
+  const { employee, isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     if (!dropdownOpen && !notifOpen) return;
@@ -56,20 +50,12 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
   }, []);
 
   const notifications = [
-    { title: 'Sarah Chen completed "Build auth API"', time: '2m ago', tone: 'success' as const },
-    { title: 'Q4 Campaign Kickoff starts in 1 hour', time: '45m ago', tone: 'warning' as const },
-    { title: 'New employee Ava Thompson joined Marketing', time: '3h ago', tone: 'brand' as const },
+    { title: 'Welcome to Afferent Tech BD OMS', time: 'now', tone: 'brand' as const },
   ];
-
-  const filteredEmployees = employees.filter((e) =>
-    !userSearch || e.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-    (e.position ?? '').toLowerCase().includes(userSearch.toLowerCase()),
-  );
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/[0.04] bg-ink-925/80 backdrop-blur-2xl">
       <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        {/* Mobile menu toggle — 44px touch target */}
         <button
           onClick={onOpenMobile}
           className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-400 transition-colors hover:bg-white/5 active:scale-95 hover:text-white lg:hidden"
@@ -78,7 +64,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Mobile search icon — 44px touch target */}
         <button
           onClick={onSearch}
           className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-400 transition-colors hover:bg-white/5 active:scale-95 hover:text-white md:hidden"
@@ -87,7 +72,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           <Search className="h-5 w-5" />
         </button>
 
-        {/* Page title — compact, Linear-style */}
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-display text-[15px] font-semibold tracking-tight text-white">{title}</h1>
           {subtitle && (
@@ -95,7 +79,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           )}
         </div>
 
-        {/* AI assistant button — subtle pill */}
         {onOpenAI && (
           <button
             onClick={onOpenAI}
@@ -106,7 +89,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           </button>
         )}
 
-        {/* Desktop search bar — command palette style */}
         <button
           onClick={onSearch}
           className="hidden items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[13px] text-ink-500 transition-colors hover:border-white/[0.10] hover:text-ink-300 md:flex"
@@ -118,7 +100,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
           </kbd>
         </button>
 
-        {/* Notifications */}
         <div ref={notifRef} className="relative">
           <button
             onClick={() => setNotifOpen((o) => !o)}
@@ -142,8 +123,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
                   <button key={i} className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03]">
                     <span className={cn(
                       'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
-                      n.tone === 'success' && 'bg-success-400',
-                      n.tone === 'warning' && 'bg-warning-400',
                       n.tone === 'brand' && 'bg-brand-400',
                     )} />
                     <div className="min-w-0">
@@ -153,14 +132,10 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
                   </button>
                 ))}
               </div>
-              <div className="border-t border-white/[0.06] px-4 py-2.5">
-                <button className="text-[11px] font-semibold text-brand-400 hover:text-brand-300">View all notifications</button>
-              </div>
             </div>
           )}
         </div>
 
-        {/* Profile button + dropdown + user switcher */}
         <div ref={dropdownRef} className="relative">
           <button
             onClick={() => setDropdownOpen((o) => !o)}
@@ -173,10 +148,10 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
             aria-haspopup="true"
             aria-expanded={dropdownOpen}
           >
-            <Avatar name={user?.name ?? 'Guest'} src={user?.avatar_url} size="sm" ring />
+            <Avatar name={employee?.name ?? 'User'} src={employee?.avatar_url} size="sm" ring />
             <div className="hidden leading-tight sm:block">
-              <p className="text-[13px] font-semibold text-white">{user?.name ?? 'Guest'}</p>
-              <p className="text-[11px] text-ink-500">{user?.position ?? '—'}</p>
+              <p className="text-[13px] font-semibold text-white">{employee?.name ?? 'User'}</p>
+              <p className="text-[11px] text-ink-500">{employee?.position ?? '—'}</p>
             </div>
             <ChevronDown
               className={cn(
@@ -188,12 +163,11 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
 
           {dropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-white/[0.08] bg-ink-850/95 shadow-dark-float backdrop-blur-2xl animate-fade-in-scale">
-              {/* Current user card */}
               <div className="flex items-center gap-3 border-b border-white/[0.06] bg-gradient-to-r from-brand-500/[0.08] to-transparent px-4 py-3">
-                <Avatar name={user?.name ?? 'Guest'} src={user?.avatar_url} size="md" ring />
+                <Avatar name={employee?.name ?? 'User'} src={employee?.avatar_url} size="md" ring />
                 <div className="min-w-0">
-                  <p className="font-display text-[13px] font-bold text-white">{user?.name}</p>
-                  <p className="truncate text-[11px] text-ink-500">{user?.email}</p>
+                  <p className="font-display text-[13px] font-bold text-white">{employee?.name}</p>
+                  <p className="truncate text-[11px] text-ink-500">{employee?.email}</p>
                   <span className={cn(
                     'mt-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ring-1 ring-inset',
                     isAdmin
@@ -205,7 +179,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
                 </div>
               </div>
 
-              {/* Quick actions */}
               <div className="p-1">
                 <button
                   onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
@@ -213,13 +186,6 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
                 >
                   <User className="h-3.5 w-3.5 text-ink-500" />
                   View my profile
-                </button>
-                <button
-                  onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-ink-300 transition-colors hover:bg-white/5 hover:text-white"
-                >
-                  <Settings className="h-3.5 w-3.5 text-ink-500" />
-                  Settings
                 </button>
                 {onOpenAI && (
                   <button
@@ -233,47 +199,11 @@ export function Topbar({ title, subtitle, onOpenMobile, onSearch, onOpenProfile,
                 )}
               </div>
 
-              {/* User switcher */}
-              <div className="border-t border-white/[0.06]">
-                <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
-                  <UsersIcon className="h-3.5 w-3.5 text-ink-500" />
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Switch user</p>
-                </div>
-                <div className="px-2 pb-1">
-                  <input
-                    type="text"
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Search…"
-                    className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 text-[12px] text-ink-200 placeholder:text-ink-600 focus:border-brand-500/30 focus:outline-none"
-                  />
-                </div>
-                <div className="max-h-44 overflow-y-auto p-1">
-                  {filteredEmployees.map((emp) => {
-                    const active = emp.id === user?.id;
-                    return (
-                      <button
-                        key={emp.id}
-                        onClick={() => { onSwitchUser(emp.id); setDropdownOpen(false); }}
-                        className={cn(
-                          'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors',
-                          active ? 'bg-brand-500/10' : 'hover:bg-white/5',
-                        )}
-                      >
-                        <Avatar name={emp.name} src={emp.avatar_url} size="xs" />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12px] font-medium text-ink-200">{emp.name}</p>
-                          <p className="truncate text-[10px] text-ink-500">{emp.role}</p>
-                        </div>
-                        {active && <Check className="h-3.5 w-3.5 shrink-0 text-brand-400" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               <div className="border-t border-white/[0.06] p-1">
-                <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-danger-400 transition-colors hover:bg-danger-500/10">
+                <button
+                  onClick={() => { setDropdownOpen(false); signOut(); }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-danger-400 transition-colors hover:bg-danger-500/10"
+                >
                   <LogOut className="h-3.5 w-3.5" />
                   Sign out
                 </button>
