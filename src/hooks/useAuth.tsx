@@ -79,6 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }, []);
 
+  const ADMIN_EMAIL = 'ahmedforkan26@gmail.com';
+
   const signUp = useCallback(async (email: string, password: string, name: string, position?: string) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
@@ -87,12 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Wait a moment for the auth user to be available, then create employee + profile
     await new Promise((r) => setTimeout(r, 500));
 
+    const isAdmin = email.trim().toLowerCase() === ADMIN_EMAIL;
+
     const { error: empErr } = await supabase.from('employees').insert({
       auth_id: data.user.id,
       name,
       email,
-      position: position ?? 'Team Member',
-      role: 'member',
+      position: position ?? (isAdmin ? 'System Administrator' : 'Team Member'),
+      role: isAdmin ? 'admin' : 'member',
       status: 'active',
       hire_date: new Date().toISOString().slice(0, 10),
       salary: 0,
@@ -110,9 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.from('profiles').insert({
         auth_id: data.user.id,
         employee_id: emp.id,
-        role: 'member',
-        bio: '',
-        skills: [],
+        role: isAdmin ? 'admin' : 'member',
+        bio: isAdmin ? 'System Administrator & Founder of Afferent Tech BD' : '',
+        skills: isAdmin ? ['Leadership', 'Management', 'Strategy'] : [],
       });
     }
 

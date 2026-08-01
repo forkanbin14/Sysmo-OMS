@@ -124,9 +124,10 @@ export function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="Password (min 6 characters)"
                 className="w-full bg-transparent text-sm text-white placeholder:text-ink-500 focus:outline-none"
                 required
+                minLength={6}
               />
               <button
                 type="button"
