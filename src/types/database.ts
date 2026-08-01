@@ -27,6 +27,9 @@ export interface Employee {
   hire_date: string | null;
   salary: number | null;
   created_at: string;
+  account_status: 'pending' | 'approved' | 'rejected';
+  username: string | null;
+  auth_id: string | null;
   // joined fields
   department?: Department | null;
 }
@@ -87,7 +90,7 @@ export interface Meeting {
 }
 
 export type DepartmentInput = Pick<Department, 'name' | 'description' | 'head_name' | 'budget'>;
-export type EmployeeInput = Omit<Employee, 'id' | 'created_at' | 'department'> & { role: EmployeeRole };
+export type EmployeeInput = Omit<Employee, 'id' | 'created_at' | 'department' | 'auth_id' | 'account_status' | 'username'> & { role: EmployeeRole };
 export type ProjectInput = Omit<Project, 'id' | 'created_at' | 'department' | 'tasks'>;
 export type TaskInput = Omit<Task, 'id' | 'created_at' | 'assignee' | 'project'>;
 export type MeetingInput = Omit<Meeting, 'id' | 'created_at'>;

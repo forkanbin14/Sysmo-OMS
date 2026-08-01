@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Shield,
   Users,
+  UserPlus,
   Building2,
   FolderKanban,
   CheckSquare,
   CalendarCheck,
   CalendarClock,
+  Clock,
   UserCog,
   Crown,
   ArrowRight,
@@ -79,11 +81,12 @@ const PERMISSIONS: { label: string; roles: EmployeeRole[] }[] = [
   { label: 'Access admin panel',        roles: ['admin'] },
 ];
 
-type Tab = 'overview' | 'employees' | 'roles' | 'transactions' | 'appearance' | 'system';
+type Tab = 'overview' | 'employees' | 'accounts' | 'roles' | 'transactions' | 'appearance' | 'system';
 
 const tabs: { key: Tab; label: string; icon: typeof Activity }[] = [
   { key: 'overview',     label: 'Overview',     icon: Activity },
   { key: 'employees',    label: 'Employees',    icon: Users },
+  { key: 'accounts',     label: 'Accounts',     icon: UserPlus },
   { key: 'roles',        label: 'Roles',        icon: Shield },
   { key: 'transactions', label: 'Transactions', icon: Wallet },
   { key: 'appearance',   label: 'Appearance',   icon: Palette },
@@ -135,6 +138,7 @@ export function Admin({ data, onNavigate }: AdminProps) {
 
       {tab === 'overview'     && <OverviewTab data={data} onNavigate={onNavigate} />}
       {tab === 'employees'    && <EmployeesTab data={data} />}
+      {tab === 'accounts'     && <AccountsTab data={data} />}
       {tab === 'roles'        && <RolesTab data={data} />}
       {tab === 'transactions' && <TransactionsTab data={data} />}
       {tab === 'appearance'   && <AppearanceTab data={data} />}
@@ -473,6 +477,229 @@ function EmployeesTab({ data }: { data: AppData }) {
         message={`This will permanently remove ${deleteTarget?.name} and their attendance records.`}
         confirmLabel="Remove" loading={deleting} destructive
       />
+    </div>
+  );
+}
+
+/* ============================================================
+   Accounts tab — admin creates & approves user accounts
+   ============================================================ */
+function AccountsTab({ data }: { data: AppData }) {
+  const { employees, refresh } = data;
+  const toast = useToast();
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({ username: '', password: '', displayName: '' });
+  const [saving, setSaving] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Employee | null>(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetting, setResetting] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const pending = employees.filter((e) => e.account_status === 'pending');
+  const approved = employees.filter((e) => e.account_status === 'approved');
+  const rejected = employees.filter((e) => e.account_status === 'rejected');
+
+  async function handleCreate() {
+    if (!form.username.trim() || !form.password.trim()) { toast.error('Username and password are required'); return; }
+    setSaving(true);
+    const { data: result, error } = await supabase.rpc('admin_create_user', {
+      p_username: form.username.trim(),
+      p_password: form.password,
+      p_display_name: form.displayName.trim() || form.username.trim(),
+    });
+    setSaving(false);
+    if (error) { toast.error('Could not create account', error.message); return; }
+    if (result && result.error) { toast.error('Could not create account', result.error); return; }
+    setCreateOpen(false);
+    setForm({ username: '', password: '', displayName: '' });
+    toast.success('Account created', `${form.username.trim()} can now sign in`);
+    refresh();
+  }
+
+  async function handleApprove(empId: string, name: string) {
+    setActionLoading(empId);
+    const { data: result, error } = await supabase.rpc('admin_approve_user', { p_employee_id: empId });
+    setActionLoading(null);
+    if (error || (result && result.error)) { toast.error('Could not approve', error?.message ?? result?.error); return; }
+    toast.success(`${name} approved`, 'They now have full access');
+    refresh();
+  }
+
+  async function handleReject(empId: string, name: string) {
+    setActionLoading(empId);
+    const { data: result, error } = await supabase.rpc('admin_reject_user', { p_employee_id: empId });
+    setActionLoading(null);
+    if (error || (result && result.error)) { toast.error('Could not reject', error?.message ?? result?.error); return; }
+    toast.success(`${name} rejected`);
+    refresh();
+  }
+
+  async function handleResetPassword() {
+    if (!resetTarget || !resetPassword.trim()) return;
+    setResetting(true);
+    const { data: result, error } = await supabase.rpc('admin_update_user_password', {
+      p_username: resetTarget.username ?? '',
+      p_password: resetPassword,
+    });
+    setResetting(false);
+    if (error || (result && result.error)) { toast.error('Could not reset password', error?.message ?? result?.error); return; }
+    setResetTarget(null);
+    setResetPassword('');
+    toast.success('Password updated');
+  }
+
+  const ACCOUNT_STATUS_META: Record<string, { label: string; tone: 'warning' | 'success' | 'danger' }> = {
+    pending: { label: 'Pending', tone: 'warning' },
+    approved: { label: 'Approved', tone: 'success' },
+    rejected: { label: 'Rejected', tone: 'danger' },
+  };
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 stagger">
+        <StatBox icon={UserPlus} label="Pending" value={pending.length} sub="Awaiting approval" tone="warning" />
+        <StatBox icon={CheckCircle2} label="Approved" value={approved.length} sub="Full access" tone="success" />
+        <StatBox icon={X} label="Rejected" value={rejected.length} sub="No access" tone="danger" />
+      </div>
+
+      <Card className="p-4 dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-base font-semibold text-ink-900 dark:text-white">User Accounts</h3>
+            <p className="text-sm text-ink-500 dark:text-ink-400">Create accounts and approve users</p>
+          </div>
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className="h-4 w-4" /> Create Account
+          </Button>
+        </div>
+      </Card>
+
+      {/* Pending accounts */}
+      {pending.length > 0 && (
+        <Card className="overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
+          <div className="border-b border-ink-100 px-4 py-3 dark:border-white/[0.06]">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-warning-500 dark:text-warning-400" />
+              <h3 className="font-display text-sm font-semibold text-ink-900 dark:text-white">Pending approval</h3>
+              <Badge tone="warning">{pending.length}</Badge>
+            </div>
+          </div>
+          <div className="divide-y divide-ink-100 dark:divide-white/[0.04]">
+            {pending.map((emp) => (
+              <div key={emp.id} className="flex items-center gap-3 px-4 py-3">
+                <Avatar name={emp.name} src={emp.avatar_url} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-ink-900 dark:text-white">{emp.name}</p>
+                  <p className="truncate text-xs text-ink-500 dark:text-ink-400">ID: {emp.username}</p>
+                </div>
+                <div className="flex gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => handleApprove(emp.id, emp.name)} loading={actionLoading === emp.id} className="h-7 px-2.5 text-xs">
+                    <CheckCircle2 className="h-3 w-3" /> Approve
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleReject(emp.id, emp.name)} className="h-7 px-2.5 text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/15">
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* All accounts */}
+      <Card className="overflow-hidden dark:bg-ink-850/60 dark:border-white/[0.06]">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-ink-100 bg-ink-50/50 text-left text-xs font-semibold uppercase tracking-wider text-ink-500 dark:border-white/[0.06] dark:bg-white/[0.02] dark:text-ink-400">
+                <th className="px-4 py-3">User</th>
+                <th className="px-4 py-3">ID</th>
+                <th className="hidden px-4 py-3 sm:table-cell">Role</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-100 dark:divide-white/[0.04]">
+              {employees.map((emp) => {
+                const statusMeta = ACCOUNT_STATUS_META[emp.account_status] ?? ACCOUNT_STATUS_META.pending;
+                const roleMeta = ROLE_META[emp.role] ?? ROLE_META.member;
+                return (
+                  <tr key={emp.id} className="transition-colors hover:bg-ink-50/40 dark:hover:bg-white/[0.02]">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={emp.name} src={emp.avatar_url} size="sm" />
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-ink-900 dark:text-white">{emp.name}</p>
+                          <p className="truncate text-xs text-ink-500 dark:text-ink-400">{emp.position || '—'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-ink-600 dark:text-ink-400">{emp.username ?? '—'}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell">
+                      <span className={cn('inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold ring-1', roleMeta.color)}>
+                        {roleMeta.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3"><Badge tone={statusMeta.tone} dot>{statusMeta.label}</Badge></td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1.5">
+                        {emp.account_status === 'pending' && (
+                          <Button size="sm" variant="outline" onClick={() => handleApprove(emp.id, emp.name)} loading={actionLoading === emp.id} className="h-7 px-2.5 text-xs">
+                            <CheckCircle2 className="h-3 w-3" /> Approve
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => { setResetTarget(emp); setResetPassword(''); }} className="h-7 px-2.5 text-xs">
+                          <Lock className="h-3 w-3" /> Reset
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Create account modal */}
+      <Modal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create User Account"
+        description="Create a new account with an ID and password. The user will sign in with these credentials."
+        footer={<><Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button><Button onClick={handleCreate} loading={saving}>Create account</Button></>}
+      >
+        <div className="space-y-4">
+          <Field label="Display ID (username)" required>
+            <Input value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} placeholder="e.g. john.doe123" />
+          </Field>
+          <Field label="Display name" >
+            <Input value={form.displayName} onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))} placeholder="e.g. John Doe" />
+          </Field>
+          <Field label="Password" required>
+            <Input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="Min 6 characters" />
+          </Field>
+          <p className="text-xs text-ink-500 dark:text-ink-400">
+            The user will sign in with their ID and this password. They'll set up their own profile after first login. You'll need to approve them before they get full access.
+          </p>
+        </div>
+      </Modal>
+
+      {/* Reset password modal */}
+      <Modal
+        open={!!resetTarget}
+        onClose={() => setResetTarget(null)}
+        title="Reset Password"
+        description={`Reset password for ${resetTarget?.name} (${resetTarget?.username})`}
+        footer={<><Button variant="outline" onClick={() => setResetTarget(null)}>Cancel</Button><Button onClick={handleResetPassword} loading={resetting}>Update password</Button></>}
+      >
+        <div className="space-y-4">
+          <Field label="New password" required>
+            <Input type="password" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} placeholder="Min 6 characters" />
+          </Field>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -1122,12 +1349,13 @@ function SystemTab({ data }: { data: AppData }) {
 /* ============================================================
    Stat box helper
    ============================================================ */
-function StatBox({ icon: Icon, label, value, sub, tone }: { icon: typeof Users; label: string; value: number; sub: string; tone: 'brand' | 'danger' | 'accent' | 'warning' }) {
+function StatBox({ icon: Icon, label, value, sub, tone }: { icon: typeof Users; label: string; value: number; sub: string; tone: 'brand' | 'danger' | 'accent' | 'warning' | 'success' }) {
   const toneClasses = {
     brand: 'bg-brand-500/15 text-brand-400 ring-brand-500/25',
     danger: 'bg-danger-500/15 text-danger-400 ring-danger-500/25',
     accent: 'bg-accent-500/15 text-accent-400 ring-accent-500/25',
     warning: 'bg-warning-500/15 text-warning-400 ring-warning-500/25',
+    success: 'bg-success-500/15 text-success-400 ring-success-500/25',
   };
   return (
     <Card className="p-5 dark:bg-ink-850/60 dark:border-white/[0.06]">

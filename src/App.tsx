@@ -11,6 +11,7 @@ import { ProfilePanel } from '@/components/layout/ProfilePanel';
 import { AIAssistant } from '@/components/ai/AIAssistant';
 import { BottomNav, MoreSheet } from '@/components/layout/BottomNav';
 import { AuthPage } from '@/pages/Auth';
+import { ProfileSetupPage } from '@/pages/ProfileSetup';
 import { Dashboard } from '@/pages/Dashboard';
 import { Employees } from '@/pages/Employees';
 import { Departments } from '@/pages/Departments';
@@ -40,7 +41,7 @@ const pageMeta: Record<PageKey, { title: string; subtitle: string }> = {
 };
 
 function AppContent() {
-  const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading, accountStatus } = useAuth();
   const [page, setPage] = useState<PageKey>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -99,6 +100,11 @@ function AppContent() {
 
   if (!session) {
     return <AuthPage />;
+  }
+
+  // Pending or rejected users see setup/waiting screen instead of the app
+  if (accountStatus === 'pending' || accountStatus === 'rejected') {
+    return <ProfileSetupPage />;
   }
 
   const meta = pageMeta[page];

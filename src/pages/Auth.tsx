@@ -1,17 +1,12 @@
 import { useState } from 'react';
-import { Mail, Lock, User, Briefcase, Eye, EyeOff, ArrowRight, Building2, Sparkles } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowRight, Building2, Shield, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 
-type Mode = 'signin' | 'signup';
-
 export function AuthPage() {
-  const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<Mode>('signin');
-  const [email, setEmail] = useState('');
+  const { signIn } = useAuth();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [position, setPosition] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,21 +14,15 @@ export function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!username.trim()) { setError('Please enter your ID'); return; }
     setLoading(true);
-
-    if (mode === 'signin') {
-      const { error } = await signIn(email.trim(), password);
-      if (error) setError(error);
-    } else {
-      if (!name.trim()) { setError('Please enter your name'); setLoading(false); return; }
-      if (password.length < 6) { setError('Password must be at least 6 characters'); setLoading(false); return; }
-      const { error } = await signUp(email.trim(), password, name.trim(), position.trim() || undefined);
-      if (error) setError(error);
-      else {
-        // Auto sign-in after signup
-        const { error: signInErr } = await signIn(email.trim(), password);
-        if (signInErr) setError(signInErr);
-      }
+    const { error } = await signIn(username, password);
+    if (error) {
+      setError(
+        error.includes('Invalid login credentials')
+          ? 'Wrong ID or password'
+          : error
+      );
     }
     setLoading(false);
   }
@@ -54,68 +43,26 @@ export function AuthPage() {
             <Building2 className="h-8 w-8 text-white" />
           </div>
           <h1 className="font-display text-2xl font-bold text-white">Afferent Tech BD</h1>
-          <p className="mt-1 text-sm text-ink-400">Enterprise Office Management System</p>
+          <p className="mt-1 text-sm text-ink-400">Office Management System</p>
         </div>
 
         {/* Card */}
         <div className="rounded-2xl border border-white/[0.08] bg-ink-850/80 p-6 shadow-dark-float backdrop-blur-2xl sm:p-8">
-          {/* Tabs */}
-          <div className="mb-6 flex rounded-xl bg-ink-900/60 p-1">
-            <button
-              onClick={() => { setMode('signin'); setError(null); }}
-              className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
-                mode === 'signin'
-                  ? 'bg-brand-600 text-white shadow-soft'
-                  : 'text-ink-400 hover:text-white'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMode('signup'); setError(null); }}
-              className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
-                mode === 'signup'
-                  ? 'bg-brand-600 text-white shadow-soft'
-                  : 'text-ink-400 hover:text-white'
-              }`}
-            >
-              Sign Up
-            </button>
+          <div className="mb-6 flex items-center gap-2 text-sm text-ink-400">
+            <Shield className="h-4 w-4 text-brand-400" />
+            <span>Sign in with your admin-assigned ID</span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'signup' && (
-              <>
-                <Field icon={<User className="h-4 w-4" />}>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Full name"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-ink-500 focus:outline-none"
-                    required
-                  />
-                </Field>
-                <Field icon={<Briefcase className="h-4 w-4" />}>
-                  <input
-                    type="text"
-                    value={position}
-                    onChange={(e) => setPosition(e.target.value)}
-                    placeholder="Job title (optional)"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-ink-500 focus:outline-none"
-                  />
-                </Field>
-              </>
-            )}
-
-            <Field icon={<Mail className="h-4 w-4" />}>
+            <Field icon={<User className="h-4 w-4" />}>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Your ID (e.g. Ahmed FK 98545)"
                 className="w-full bg-transparent text-sm text-white placeholder:text-ink-500 focus:outline-none"
                 required
+                autoComplete="username"
               />
             </Field>
 
@@ -124,10 +71,10 @@ export function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password (min 6 characters)"
+                placeholder="Password"
                 className="w-full bg-transparent text-sm text-white placeholder:text-ink-500 focus:outline-none"
                 required
-                minLength={6}
+                autoComplete="current-password"
               />
               <button
                 type="button"
@@ -145,32 +92,18 @@ export function AuthPage() {
             )}
 
             <Button type="submit" loading={loading} className="w-full" size="lg">
-              {mode === 'signin' ? 'Sign In' : 'Create Account'}
+              Sign In
               <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
 
-          {mode === 'signin' && (
-            <p className="mt-4 text-center text-xs text-ink-500">
-              New employee?{' '}
-              <button onClick={() => { setMode('signup'); setError(null); }} className="font-semibold text-brand-400 hover:text-brand-300">
-                Create an account
-              </button>
-            </p>
-          )}
-          {mode === 'signup' && (
-            <p className="mt-4 text-center text-xs text-ink-500">
-              Already have an account?{' '}
-              <button onClick={() => { setMode('signin'); setError(null); }} className="font-semibold text-brand-400 hover:text-brand-300">
-                Sign in
-              </button>
-            </p>
-          )}
+          <p className="mt-6 text-center text-xs text-ink-500">
+            Don't have an ID? Contact your administrator.
+          </p>
         </div>
 
-        <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-ink-600">
-          <Sparkles className="h-3 w-3" />
-          Each employee has their own secure account
+        <p className="mt-6 text-center text-xs text-ink-600">
+          Only admin-assigned accounts can sign in
         </p>
       </div>
     </div>
