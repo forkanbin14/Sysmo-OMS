@@ -78,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadEmployeeData, refreshUser]);
 
   const signIn = useCallback(async (username: string, password: string) => {
-    // Convert username to internal email
-    const email = `${username.trim().toLowerCase()}@afftech.bd`;
+    // Convert username to internal email — spaces become dots to match DB storage
+    const email = `${username.trim().toLowerCase().replace(/\s+/g, '.')}@afftech.bd`;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
     return { error: null };
